@@ -175,31 +175,47 @@ int Map::loadFromFile(std::string filename)
 	}
 
 	//Read texture info
-	std::string textureName; int textureSize = 16;
-	inFile >> textureName;
-	inFile >> textureSize;
-	inFile >> tileSize;
+	int nTilesets;  std::string textureName; int textureSize = 16; //the expected size of each subrect in the tile sheet
+	inFile >> nTilesets;
 
+	std::cout << "Looking for " << nTilesets << " tilesets..." << std::endl;
+	
+	for (int i = 0; i < nTilesets; i++) {
+		inFile >> textureName >> textureSize;
+		std::pair<std::string, int> set;
+		set.first = textureName; set.second = textureSize;
+		tilesets.push_back(set);
+
+		std::cout << "\tread set: " << tilesets.back().first << ", " << tilesets.back().second << "x" << tilesets.back().second << std::endl;
+	}
+
+	inFile >> tileSize; //The size that each tile will be scaled to
+
+	std::cout << "Tilesize: " << tileSize << std::endl;
+		 
 	//Read dimensions
 	inFile >> dimensions.x >> dimensions.y;
-
+	std::cout << "Dimensions: " << dimensions.x << "x" << dimensions.y << std::endl;
 
 	//Read Tiles
 	Tile* t; int type; int pass; float cost; float rotation;
 
 	for (unsigned int i = 0; i < dimensions.y; i++) {
 		tiles.push_back(new std::vector<Tile*>());
-		for (unsigned j = 0; j < dimensions.x; j++) {
+		for (unsigned j = 0; j < dimensions.x; j++)
+		{
+			
 			t = new Tile();
-			t->sprite.setTexture(texReg->lookup(textureName));
-			t->sprite.setFrameSize(32, 32);
+			inFile >> *t;
+			t->sprite.setTexture(texReg->lookup(tilesets.at(t->sheet).first));
+			t->sprite.setFrameSize(tilesets.at(t->sheet).second, tilesets.at(t->sheet).second);
 			t->sprite.setSize({ (float)tileSize, (float)tileSize });
-			t->sprite.setPosition({ (float)j * textureSize + offset.x, (float)i * textureSize + offset.y });
+			t->sprite.setPosition({ (float)j * tileSize + offset.x, (float)i * tileSize + offset.y });
 			t->sprite.setOrigin({ t->sprite.getLocalBounds().size.x / 2.f, t->sprite.getLocalBounds().size.y / 2.f });
 			t->pos = { j,i };
 			tiles.at(i)->push_back(t);
 
-			inFile >> *t;
+			
 			
 
 			/*char c;

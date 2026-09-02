@@ -12,6 +12,7 @@ void Engine::initTextures()
 	texReg = new TextureRegistry();
 
 	texReg->addTexture("default", "resource/tex/nope.png");
+	texReg->addTexture("tileset_test", "resource/tex/tileset_test.png");
 	texReg->addTexture("tileset_0", "resource/tex/tileset_1.png");
 	texReg->addTexture("tileset_3", "resource/tex/tileset_3.png");
 	texReg->addTexture("player", "resource/tex/redcircle.png");

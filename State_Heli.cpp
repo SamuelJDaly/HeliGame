@@ -37,7 +37,7 @@ void State_Heli::updateEnemies(float dt)
 
 void State_Heli::initTest() {
 	map = new Map(texReg);
-	map->loadFromFile("resource/map_heli.txt");
+	map->loadFromFile("resource/map_multi.txt");
 	map->setGridDraw(false);
 
 	//## Player

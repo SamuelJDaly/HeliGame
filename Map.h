@@ -13,6 +13,7 @@ struct Tile {
 	sf::Vector2<unsigned int> pos = { 0,0 };
 	Spritesheet sprite;
 	sf::Angle rotation = sf::degrees(0.f);
+	int sheet = -1;
 	int type = -1;
 	float moveCost = 1.f;
 
@@ -41,16 +42,16 @@ struct Tile {
 };
 
 inline std::ostream& operator<<(std::ostream& os, Tile& t) {
-	os << "[ " << t.type << " " << t.isPassable << " " << t.moveCost << " " << t.sprite.getRotation().asDegrees() << " ]";
+	os << "[ " << t.sheet << t.type << " " << t.isPassable << " " << t.moveCost << " " << t.sprite.getRotation().asDegrees() << " ]";
 	return os;
 }
 
 inline std::istream& operator>>(std::istream& is, Tile &t) {
-	// [ i i f f ]
+	// [i i i f f ]
 	char c;
 	is >> c;
 	float rotation = 0.f;
-	is >> t.type >> t.isPassable >> t.moveCost >> rotation >> c;
+	is >> t.sheet >> t.type >> t.isPassable >> t.moveCost >> rotation >> c;
 	t.sprite.setFrameSize(32, 32);
 	t.sprite.setRotation(sf::degrees(rotation));
 
@@ -69,6 +70,7 @@ private:
 	//Data
 	sf::Vector2<unsigned int> dimensions = { 0,0 };
 	int numTilesets = 1;
+	std::vector<std::pair<std::string, int>> tilesets;
 	std::vector<std::vector<Tile*>*> tiles;
 	TextureRegistry* texReg;
 	//std::vector<sf::Vertex> grid;
