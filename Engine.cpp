@@ -15,6 +15,7 @@ void Engine::initTextures()
 	texReg->addTexture("tileset_test", "resource/tex/tileset_test.png");
 	texReg->addTexture("tileset_0", "resource/tex/tileset_1.png");
 	texReg->addTexture("tileset_3", "resource/tex/tileset_3.png");
+	texReg->addTexture("tileset_4", "resource/tex/citysheet.png");
 	texReg->addTexture("player", "resource/tex/redcircle.png");
 	texReg->addTexture("star", "resource/tex/star.png");
 	texReg->addTexture("medkit", "resource/tex/medkit.png");
@@ -27,9 +28,9 @@ void Engine::initTextures()
 
 void Engine::initState()
 {
-	//currState = new State_Strategic(texReg, this->win);
-	//currState = new State_Game(texReg, this->win);
+	//currState = new State_Game(texReg, win);
 	currState = new State_Heli(texReg, this->win);
+	//currState = new State_LevelEditor(texReg, this->win);
 	//currState = new State_Editor(textureHandler, this->win);
 	//currState = new State_Menu(textureHandler, this->win);
 }
@@ -69,6 +70,13 @@ void Engine::poll()
 				auto pos = sf::Mouse::getPosition(*win);
 
 				//std::cout << "(" << pos.x << ", " << pos.y << ")" << std::endl;
+			}
+		}
+
+		if (auto* keyRel = event->getIf<sf::Event::KeyReleased>()) {
+			if (keyRel->code == sf::Keyboard::Key::Escape) {
+				isMouseGrabbed = !isMouseGrabbed;
+				win->setMouseCursorGrabbed(isMouseGrabbed);
 			}
 		}
 

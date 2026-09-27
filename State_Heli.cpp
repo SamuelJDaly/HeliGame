@@ -20,7 +20,7 @@ void State_Heli::updateCamera(float dt) {
 
 void State_Heli::updateEnemies(float dt)
 {
-	for (auto it = enemies.begin(); it != enemies.end();)
+	/*for (auto it = enemies.begin(); it != enemies.end();)
 	{
 
 		if ((*it)->getDead()) {
@@ -32,10 +32,32 @@ void State_Heli::updateEnemies(float dt)
 			(*it)->update(dt);
 			++it;
 		}
+	}*/
+
+	auto c = [&](Enemy* e)
+		{
+			if (e->getDead())
+			{
+				player->addKill();
+				return true;
+			}
+
+			return false;
+		};
+
+	enemies.erase(std::remove_if(enemies.begin(), enemies.end(), c), enemies.end());
+
+	for (auto e : enemies)
+	{
+		e->update(dt);
 	}
 }
 
-void State_Heli::initTest() {
+void State_Heli::init() {
+	this->clearColor = sf::Color::Blue;
+	view_map.setViewport({ {0.f,0.f},{1.f,1.f} });
+	view_map.setSize({ (float)win->getSize().x, (float)win->getSize().y });
+
 	map = new Map(texReg);
 	map->loadFromFile("resource/map_multi.txt");
 	map->setGridDraw(false);
@@ -73,6 +95,8 @@ void State_Heli::spawnRandomEnemies(int amt)
 		e->setTexture(texReg->lookup("truck_0"));
 		e->setPosition(pos);
 		e->setScale({1.5f,1.5f});
+		e->setHitbox({ {0.f,0.f},{32.f,16.f} });
+		e->SetIsDebugDrawn(true);
 		enemyCount++;
 
 		enemies.push_back(e);
@@ -89,7 +113,7 @@ void State_Heli::updateCollision(float dt)
 			continue;
 		}
 		for (auto e : enemies) {
-			std::optional<sf::FloatRect> intersection = e->getGlobalBounds().findIntersection(p->getGlobalBounds());
+			std::optional<sf::FloatRect> intersection = e->getHitbox().findIntersection(p->getGlobalBounds());
 			if (intersection.has_value()) {
 				p->detonate();
 				e->modCurrHP(-1*p->getDamage());
@@ -101,13 +125,10 @@ void State_Heli::updateCollision(float dt)
 }
 
 
-State_Heli::State_Heli(TextureRegistry* textureRegistry, sf::RenderWindow* window) {
-	texReg = textureRegistry;
-	win = window;
-	this->clearColor = sf::Color::Blue;
-	view_map.setViewport({ {0.f,0.f},{1.f,1.f} });
-	view_map.setSize({ (float)win->getSize().x, (float)win->getSize().y });
-	this->initTest();
+State_Heli::State_Heli(TextureRegistry* textureRegistry, sf::RenderWindow* window)
+	: Gamestate(textureRegistry, window)
+{ 
+	this->init();
 }
 
 State_Heli::~State_Heli() {

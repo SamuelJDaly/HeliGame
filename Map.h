@@ -9,6 +9,23 @@
 #include "Spritesheet.h"
 #include "Utility.h"
 
+/*
+Project: Helicopter Game, Map System
+Created: 04 AUG 2026
+Updated: 19 SEP 2026
+
+Description:
+	The Map system allows a grid of tiles to be manipulated and displayed. It is intended to be adaptable to a variety of game styles, and is
+	comprised of the following components
+
+	1. Tile
+		The Tile struct contains basic tile data including sprite/texture
+
+
+	2. Map
+		
+*/
+
 struct Tile {
 	sf::Vector2<unsigned int> pos = { 0,0 };
 	Spritesheet sprite;
@@ -46,21 +63,6 @@ inline std::ostream& operator<<(std::ostream& os, Tile& t) {
 	return os;
 }
 
-inline std::istream& operator>>(std::istream& is, Tile &t) {
-	// [i i i f f ]
-	char c;
-	is >> c;
-	float rotation = 0.f;
-	is >> t.sheet >> t.type >> t.isPassable >> t.moveCost >> rotation >> c;
-	t.sprite.setFrameSize(32, 32);
-	t.sprite.setRotation(sf::degrees(rotation));
-
-	//std::cout << t << std::endl;
-	t.sprite.setFrame(t.type);
-	//rest of data must be set externally
-	return is;
-}
-
 
 
 
@@ -81,6 +83,7 @@ private:
 	sf::Color gridColor = sf::Color::Green;
 	std::vector<sf::Vertex> grid;
 	sf::Texture* fogTexture;
+
 
 	//Util
 	void align();

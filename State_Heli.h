@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Gamestate.h"
 #include "Map.h"
 #include "Helicopter.h"
@@ -35,7 +34,7 @@ private:
 	void moveCamera(sf::Vector2<float> offset);
 	void updateCamera(float dt);
 	void updateEnemies(float dt);
-	void initTest();
+	void init();
 	void updateTest(float dt);
 	void spawnRandomEnemies(int amt);
 

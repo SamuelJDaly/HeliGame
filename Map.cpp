@@ -171,6 +171,9 @@ int Map::loadFromFile(std::string filename)
 	inFile >> fType;
 	if (fType != 100) {
 		std::cout << "Could not load map: " << filename << ", incorrect type..." << std::endl;
+
+		//LOG_ERROR("Could not load map: " + filename + ", incorrect type...", "");
+
 		return -1;
 	}
 
@@ -178,7 +181,8 @@ int Map::loadFromFile(std::string filename)
 	int nTilesets;  std::string textureName; int textureSize = 16; //the expected size of each subrect in the tile sheet
 	inFile >> nTilesets;
 
-	std::cout << "Looking for " << nTilesets << " tilesets..." << std::endl;
+	//logger.info("Looking for " + std::to_string(nTilesets) + " tilesets");
+	//std::cout << "Looking for " << nTilesets << " tilesets..." << std::endl;
 	
 	for (int i = 0; i < nTilesets; i++) {
 		inFile >> textureName >> textureSize;
@@ -198,17 +202,34 @@ int Map::loadFromFile(std::string filename)
 	std::cout << "Dimensions: " << dimensions.x << "x" << dimensions.y << std::endl;
 
 	//Read Tiles
-	Tile* t; int type; int pass; float cost; float rotation;
+	Tile* t; int sheet; int type; int pass; float cost; float rotation;
 
 	for (unsigned int i = 0; i < dimensions.y; i++) {
 		tiles.push_back(new std::vector<Tile*>());
 		for (unsigned j = 0; j < dimensions.x; j++)
 		{
-			
+			//Read attributes
+			char c;
+			inFile >> c; //discard [
+
+			inFile >> sheet >> type >> pass >> cost >> rotation;
+
+			inFile >> c; //discard ]
+
+			//Set attributes
 			t = new Tile();
-			inFile >> *t;
+			t->sheet = sheet;
+			t->type = type;
+			t->moveCost = cost;
+			t->isPassable = pass;
+			t->rotation = sf::degrees(rotation);
+
+			
 			t->sprite.setTexture(texReg->lookup(tilesets.at(t->sheet).first));
 			t->sprite.setFrameSize(tilesets.at(t->sheet).second, tilesets.at(t->sheet).second);
+			t->sprite.setRotation(sf::degrees(rotation));
+			t->sprite.setFrame(type);
+
 			t->sprite.setSize({ (float)tileSize, (float)tileSize });
 			t->sprite.setPosition({ (float)j * tileSize + offset.x, (float)i * tileSize + offset.y });
 			t->sprite.setOrigin({ t->sprite.getLocalBounds().size.x / 2.f, t->sprite.getLocalBounds().size.y / 2.f });

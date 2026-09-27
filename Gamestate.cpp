@@ -4,7 +4,6 @@
 //################################################################################################################
 //				COMMON FUNCTIONS
 ////##############################################################################################################
-
 bool Gamestate::getFinished()
 {
 	return isFinished;
@@ -20,8 +19,10 @@ En_Gamestate Gamestate::getNextState()
 ////##############################################################################################################
 
 
-void State_Game::init_test()
+void State_Game::init()
 {
+	view_map = win->getDefaultView();
+
 	map = new Map(texReg);
 	map->setVeiw(&view_map);
 	map->loadFromFile("resource/map_maze.txt");
@@ -61,6 +62,7 @@ void State_Game::init_test()
 
 	items.push_back(star);
 	items.push_back(medpack);
+
 }
 
 
@@ -192,12 +194,13 @@ void State_Game::pollPlayerInput(sf::RenderWindow& win, std::optional<sf::Event>
 }
 
 //################################### CONSTRUCTOR AND DESTRUCTOR
+
 State_Game::State_Game(TextureRegistry* textureRegistry, sf::RenderWindow* window)
+	: Gamestate(textureRegistry, window)
 {
-	win = window;
 	texReg = textureRegistry;
-	view_map = win->getDefaultView();
-	this->init_test();
+	win = window;
+	this->init();
 }
 
 State_Game::~State_Game()

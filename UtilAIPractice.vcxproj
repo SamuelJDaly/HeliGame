@@ -149,6 +149,7 @@
     <ClCompile Include="Spritesheet.cpp" />
     <ClCompile Include="State_Heli.cpp" />
     <ClCompile Include="TextureRegistry.cpp" />
+    <ClCompile Include="TilesetBrowser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Enemy.h" />

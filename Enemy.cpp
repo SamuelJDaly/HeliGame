@@ -1,5 +1,33 @@
 #include "Enemy.h"
 
+void Enemy::drawDebug(sf::RenderWindow& win)
+{
+	//Draw Hitbox
+	sf::RectangleShape box;
+	box.setFillColor(sf::Color::Transparent);
+	box.setOutlineColor(sf::Color::Green);
+	box.setOutlineThickness(1.f);
+	box.setPosition(this->getHitbox().position);
+	box.setSize(this->getHitbox().size);
+	win.draw(box);
+
+	//Draw sprite rectangle
+	sf::RectangleShape box2;
+	box2.setFillColor(sf::Color::Transparent);
+	box2.setOutlineColor(sf::Color::Blue);
+	box2.setOutlineThickness(1.f);
+	box2.setPosition(sprite.getGlobalBounds().position);
+	box2.setSize(sprite.getGlobalBounds().size);
+	//win.draw(box2);
+
+	//Draw Target line
+	sf::Vector2<float> posA = sprite.getPosition();
+	sf::Vector2<float> posB = targetPos;
+	sf::Vertex line[2] = { {posA, sf::Color::Red, {0,0}},{posB, sf::Color::Red, {0,0}} };
+
+	win.draw(line, 2, sf::PrimitiveType::Lines);
+}
+
 void Enemy::updateBasic(float dt)
 {
 	//## Random Wander
@@ -39,15 +67,14 @@ void Enemy::updateBasic(float dt)
 			//Flip to face target
 			if (targetPos.x < sprite.getPosition().x && !isFlipped) {
 				sprite.scale({ -1.f,1.f });
+				isFlipped = true;
 			}
 			else if(isFlipped) {
 				sprite.scale({ -1.f,1.f });
+				isFlipped = false;
 			}
 		}
 	}
-
-	
-
 }
 
 void Enemy::die()
@@ -89,12 +116,24 @@ void Enemy::update(float dt) {
 }
 
 void Enemy::draw(sf::RenderWindow& win) {
+	
 	sprite.draw(win);
+
+	if (isDebugDrawn)
+	{
+		this->drawDebug(win);
+	}
 }
 
-void Enemy::setTexture(sf::Texture* texture) {
+void Enemy::setTexture(sf::Texture* texture, bool resetHibox) {
 	sprite.setTexture(texture);
 	sprite.setFrameSize(32,32);
+	sprite.setOrigin(sprite.getLocalBounds().getCenter());
+
+	if (resetHibox)
+	{
+		hitBox = { {0,0},{32.f,32.f} };
+	}
 }
 
 void Enemy::setPosition(sf::Vector2<float> pos) {
@@ -103,4 +142,25 @@ void Enemy::setPosition(sf::Vector2<float> pos) {
 	if (isTargetReached) {
 		targetPos = pos;
 	}
+}
+
+void Enemy::setScale(sf::Vector2<float> factor)
+{
+	sprite.setScale(factor); 
+	if (isFlipped) { sprite.scale({ -1.f,1.f }); }
+	scaleFactor = factor;
+}
+
+sf::FloatRect Enemy::getHitbox()
+{
+	sf::Vector2<float> sf = {std::fabs(scaleFactor.x), std::fabs(scaleFactor.y)};
+	sf::Vector2<float> boxPos = { hitBox.position.x + sprite.getPosition().x, hitBox.position.y + sprite.getPosition().y};
+	
+	sf::Vector2<float> boxSize = {hitBox.size.x * sf.x, hitBox.size.y * sf.y};
+
+	//Correct for centered origin
+	boxPos.x -= boxSize.x / 2.f;
+	boxPos.y -= boxSize.y / 2.f;
+
+	return { boxPos,boxSize };
 }

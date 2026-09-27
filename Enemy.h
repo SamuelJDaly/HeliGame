@@ -4,6 +4,7 @@
 #include "Spritesheet.h"
 #include "Projectile.h"
 
+
 class Enemy
 {
 private:
@@ -15,6 +16,10 @@ private:
 	bool isDead = false;
 	bool isDying = false;
 	bool isFlipped = false;
+	bool isDebugDrawn = false;
+
+	sf::FloatRect hitBox = { {0.f,0.f},{1.f,1.f} };
+	sf::Vector2<float> scaleFactor = {1.f,1.f};
 
 	//Stats
 	int baseHp = 10;
@@ -32,6 +37,7 @@ private:
 	//## Util
 	void updateBasic(float dt);
 	void die();
+	void drawDebug(sf::RenderWindow &win);
 
 public:
 	//## Constructors and Destructor
@@ -42,7 +48,7 @@ public:
 	void update(float dt);
 	void draw(sf::RenderWindow &win);
 
-	void setTexture(sf::Texture* texture);
+	void setTexture(sf::Texture* texture, bool resetHibox = true);
 	void setPosition(sf::Vector2<float> pos);
 
 	inline int getID() { return id; }
@@ -55,8 +61,13 @@ public:
 
 	inline int getCurrHp() { return currHp; }
 
-	inline void setScale(sf::Vector2<float> factor) { sprite.setScale(factor); if (isFlipped) { sprite.scale({-1.f,1.f}); } }
+	void setScale(sf::Vector2<float> factor);
 	
 	inline sf::Rect<float> getGlobalBounds() { return sprite.getGlobalBounds(); }
+
+	inline void setHitbox(sf::FloatRect newHitBox) { hitBox = newHitBox; }
+	sf::FloatRect getHitbox();
+
+	inline void SetIsDebugDrawn(bool state) { isDebugDrawn = state; }
 };
 
