@@ -7,6 +7,7 @@
 #include "TextureRegistry.h"
 #include "Gamestate.h"
 #include "State_Heli.h"
+#include "EditorState.h"
 
 /*
 Project: Helicopter Game, Engine

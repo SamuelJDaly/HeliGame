@@ -45,6 +45,64 @@ Map::Map(TextureRegistry* textureRegistry)
 	}
 }
 
+Map::Map(TextureRegistry* textureRegistry, int tileSize, sf::Vector2<unsigned int> dims, std::string textureName, int textureSize)
+{
+	texReg = textureRegistry;
+	this->tileSize = tileSize;
+	this->dimensions = dims;
+
+	tilesets.push_back({textureName, tileSize});
+
+	for (unsigned int i = 0; i < dims.y; i++)
+	{
+		tiles.push_back(new std::vector<Tile*>());
+		for (unsigned int j = 0; j < dims.x; j++)
+		{
+			Tile* t = new Tile();
+
+			t->sheet = 0;
+			t->type = 0;
+			t->isPassable = 1;
+
+			t->sprite.setTexture(texReg->lookup(textureName));
+			t->sprite.setFrameSize(textureSize,textureSize);
+			t->sprite.setFrame(0);
+
+
+			t->sprite.setSize({ (float)tileSize, (float)tileSize });
+			t->sprite.setPosition({ (float)j * tileSize + offset.x, (float)i * tileSize + offset.y });
+			t->sprite.setOrigin({ t->sprite.getLocalBounds().size.x / 2.f, t->sprite.getLocalBounds().size.y / 2.f });
+			t->pos = { j,i };
+
+			tiles.at(i)->push_back(t);
+		}
+	}
+}
+
+Map::Map(const Map &deepCopy)
+{
+	this->dimensions = deepCopy.dimensions;
+	this->texReg = deepCopy.texReg;
+	this->tilesets = deepCopy.tilesets;
+	this->numTilesets = deepCopy.numTilesets;
+	//this->fogTexture = ... does not really matter right now, should implement later though for completeness
+	this->drawGrid = deepCopy.drawGrid;
+	this->gridColor = deepCopy.gridColor;
+	this->offset = deepCopy.offset;
+	this->tileSize = deepCopy.tileSize;
+	this->view = deepCopy.view;
+	
+	//Copy tiles
+	for (int i = 0; i < dimensions.y; i++)
+	{
+		tiles.push_back(new std::vector<Tile*>());
+		for (int j = 0; j < dimensions.x; j++)
+		{
+			tiles.at(i)->push_back(new Tile(*deepCopy.tiles.at(i)->at(j)));
+		}
+	}
+}
+
 Map::~Map()
 {
 	for (unsigned int i = 0; i < dimensions.y; i++) {
@@ -130,12 +188,12 @@ sf::Vector2<int> Map::posToTileIdx(sf::Vector2<float> pos)
 	//Get index
 	sf::Vector2<int> idx = { (int)std::floor(pos.x / tileSize),(int)std::floor(pos.y / tileSize) };
 
-	//Should flip this so it fails early and checks less conditions on avg
-	if (idx.x >= 0 && idx.y >= 0 && idx.x < (int)dimensions.x && idx.y < (int)dimensions.y) {
-		return idx;
-	}
-
-	return { -1,-1 };
+	//Return -1 for axis if off map to top or left, return -2 if off map to bottom or right (this is insane, but itll work, just trust me bro)
+	if (idx.x >= dimensions.x){ idx.x = -2;}
+	if (idx.y >= dimensions.y){ idx.y = -2;}
+	if (idx.x < 0){ idx.x = -1;}
+	if (idx.y < 0){ idx.y = -1;}
+	return idx;
 }
 
 sf::Vector2<float> Map::tileIdxToPos(sf::Vector2<int> idx)
@@ -143,6 +201,7 @@ sf::Vector2<float> Map::tileIdxToPos(sf::Vector2<int> idx)
 	//Check for valid idx
 	if (idx.x >= dimensions.x || idx.y >= dimensions.y || idx.x < 0 || idx.y < 0) {
 		std::cout << "Cannot get map position at index, index out of range..." << std::endl;
+		std::cout << "\tIdx: " << idx.x << ", " << idx.y << std::endl;
 		return { -1.f,-1.f };
 	}
 
@@ -294,12 +353,99 @@ Tile* Map::tileAtIdx(std::pair<int, int> idx)
 	return tiles.at(idx.second)->at(idx.first);
 }
 
+void Map::setTileAtIdx(sf::Vector2<unsigned int> idx, Tile fill)
+{
+	if (idx.x >= dimensions.x || idx.y >= dimensions.y)
+	{
+		std::cout << "Could not set tile at index: invalid index" << std::endl;
+		return;
+	}
+
+	delete tiles.at(idx.y)->at(idx.x);
+	tiles.at(idx.y)->at(idx.x) = new Tile(fill);
+}
+
+bool Map::containsPos(sf::Vector2<float> pos)
+{
+	if (tiles.empty())
+	{
+		return false;
+	}
+	
+	float minX = tiles.front()->front()->sprite.getGlobalBounds().position.x;
+	float minY = tiles.front()->front()->sprite.getGlobalBounds().position.y;
+	float maxX = tiles.back()->back()->sprite.getGlobalBounds().position.x + tiles.back()->back()->sprite.getGlobalBounds().size.x;
+	float maxY = tiles.back()->back()->sprite.getGlobalBounds().position.y + tiles.back()->back()->sprite.getGlobalBounds().size.y;
+
+	return (pos.x >= minX && pos.x < maxX) && (pos.y >= minY && pos.y < maxY);
+}
+
+bool Map::containsIdx(sf::Vector2<int> idx)
+{
+	unsigned int x = (unsigned int)idx.x;
+	unsigned int y = (unsigned int)idx.y;
+	if (x >= 0 && x < dimensions.x && y >= 0 && y < dimensions.y)
+	{
+		return true;
+	}
+	return false;
+}
+
 int Map::mnhtnDist(sf::Vector2<float> a, sf::Vector2<float> b)
 {
 	auto idxA = posToTileIdx(a);
 	auto idxB = posToTileIdx(b);
 
 	return std::fabs(idxA.x - idxB.x) + std::fabs(idxA.y - idxB.y);
+}
+
+void Map::refreshTextures()
+{
+	for (int i = 0; i < dimensions.y; i++)
+	{
+		for (int j = 0; j <dimensions.x; j++)
+		{
+			int sheetIdx = tiles.at(i)->at(j)->sheet;
+			int frameSize = tilesets.at(sheetIdx).second;
+			tiles.at(i)->at(j)->sprite.setTexture(texReg->lookup(tilesets.at(sheetIdx).first));
+			tiles.at(i)->at(j)->sprite.setFrameSize(frameSize, frameSize);
+			tiles.at(i)->at(j)->sprite.setFrame(tiles.at(i)->at(j)->type);
+		}
+	}
+}
+
+void Map::refreshTextureAt(int x, int y)
+{
+	if (x < 0 || x >= dimensions.x || y < 0 || y >= dimensions.y)
+	{
+		return;
+	}
+
+	int sheetIdx = tiles.at(y)->at(x)->sheet;
+	int frameSize = tilesets.at(sheetIdx).second;
+	tiles.at(y)->at(x)->sprite.setTexture(texReg->lookup(tilesets.at(sheetIdx).first));
+	tiles.at(y)->at(x)->sprite.setFrameSize(frameSize, frameSize);
+	tiles.at(y)->at(x)->sprite.setFrame(tiles.at(y)->at(x)->type);
+}
+
+void Map::modTileSheetAt(unsigned int x, unsigned int y, int sheet)
+{
+	if (x >= dimensions.x || y >= dimensions.y)
+	{
+		return;
+	}
+
+	tiles.at(y)->at(x)->sheet = sheet;
+}
+
+void Map::modTileTypeAt(unsigned int x, unsigned int y, int type)
+{
+	if (x >= dimensions.x || y >= dimensions.y)
+	{
+		return;
+	}
+
+	tiles.at(y)->at(x)->type = type;
 }
 
 

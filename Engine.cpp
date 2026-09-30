@@ -29,10 +29,11 @@ void Engine::initTextures()
 void Engine::initState()
 {
 	//currState = new State_Game(texReg, win);
-	currState = new State_Heli(texReg, this->win);
+	//currState = new State_Heli(texReg, this->win);
 	//currState = new State_LevelEditor(texReg, this->win);
 	//currState = new State_Editor(textureHandler, this->win);
 	//currState = new State_Menu(textureHandler, this->win);
+	currState = new EditorState(texReg, this->win);
 }
 
 Engine::Engine()

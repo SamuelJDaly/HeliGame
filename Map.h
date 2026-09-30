@@ -35,10 +35,24 @@ struct Tile {
 	float moveCost = 1.f;
 
 	bool isPassable = true;
-	
-
-
 	bool isHighlight = false;
+
+	inline Tile(){}
+
+	//inline Tile(int sheet, int type) { this->sheet = sheet; this->type = type; }
+
+	inline Tile(const Tile& deepCopy)
+	{
+		pos = deepCopy.pos;
+		rotation = deepCopy.rotation;
+		sheet = deepCopy.sheet;
+		type = deepCopy.type;
+		moveCost = deepCopy.moveCost;
+		isPassable = deepCopy.isPassable;
+		isHighlight = deepCopy.isHighlight;
+
+		sprite = Spritesheet(sprite); //May need to convert to deep copy
+	}
 
 	inline bool contains(sf::Vector2<float> pos) {
 		if (sprite.contains(pos)) {
@@ -92,6 +106,8 @@ private:
 public:
 	//Constructors and Destructor
 	Map(TextureRegistry* textureRegistry);
+	Map(TextureRegistry* textureRegistry, int tileSize, sf::Vector2<unsigned int> dims, std::string textureName, int textureSize);
+	Map(const Map &deepCopy);
 	~Map();
 
 	//Primary Functions
@@ -110,9 +126,19 @@ public:
 
 	Tile* tileAtIdx(size_t x, size_t y);
 	Tile* tileAtIdx(std::pair<int, int> idx);
+	void setTileAtIdx(sf::Vector2<unsigned int> idx, Tile fill);
+
+	bool containsPos(sf::Vector2<float> pos);
+	bool containsIdx(sf::Vector2<int> idx);
 
 	//float mnhtnDist(sf::Vector2<int> a, sf::Vector2<int> b);
 	int mnhtnDist(sf::Vector2<float> a, sf::Vector2<float> b);
+
+	void refreshTextures();
+	void refreshTextureAt(int x, int y);
+
+	void modTileTypeAt(unsigned int x, unsigned int y, int type);
+	void modTileSheetAt(unsigned int x, unsigned int y,  int sheet);
 
 
 	std::vector<sf::Vector2<int>> tileIdxInRange(int range, sf::Vector2<int> og, bool includeOG = false);
@@ -122,6 +148,8 @@ public:
 
 	inline void setGridDraw(bool state) { drawGrid = state; }
 
+	inline sf::Vector2<unsigned int> getDimensions() { return dimensions; }
+	
 	void Poll(sf::RenderWindow& win, std::optional<sf::Event> event);
 	void Update();
 	void Draw(sf::RenderWindow& win);
