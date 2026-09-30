@@ -157,18 +157,63 @@ void EditorState::drawBrush(sf::RenderWindow& win)
 	win.draw(box);
 }
 
-int EditorState::save()
+int EditorState::createMap()
 {
-	if (!map->writeToFile(filepath))
-	{
-		return -1;
-	}
+	delete map;
+	this->clearUndoStack();
+	this->clearRedoStack();
+
+	map = new Map(texReg, 32, { 10,10 }, "tileset_0", 32);
+	map->setVeiw(&mapView);
+	map->setGridDraw(true);
+	map->setGridColor(sf::Color::White);
+
 	return 1;
 }
 
-int EditorState::load(std::string filepath)
+int EditorState::saveMap()
 {
-	pfd::message("Hey!", "Just testing...");
+	auto selection = pfd::save_file("Select a file", "", {}, false).result();
+	if (!selection.empty())
+	{
+		if (!map->writeToFile(selection))
+		{
+			std::cout << "Could not save file..." << std::endl;
+			return -1;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+
+	std::cout << "File Saved..." << std::endl;
+	return 1;
+}
+
+int EditorState::openMap()
+{
+
+	auto selection = pfd::open_file("Select a file", "", {},false).result();
+	if (!selection.empty())
+	{
+		Map* newMap = new Map(texReg);
+		//check for succesful load
+		if (newMap->loadFromFile(selection.front()))
+		{
+			//Then swap maps
+			delete map;
+			map = newMap;
+			this->clearRedoStack();
+			this->clearUndoStack();
+		}
+		else
+		{
+			delete newMap;
+		}
+	}
+		
+
 	return 0;
 }
 
@@ -195,6 +240,15 @@ void EditorState::redo()
 	redoStack.pop();
 }
 
+void EditorState::clearUndoStack()
+{
+	while (!undoStack.empty())
+	{
+		delete undoStack.top();
+		undoStack.pop();
+	}
+}
+
 void EditorState::clearRedoStack()
 {
 	while (!redoStack.empty())
@@ -207,9 +261,9 @@ void EditorState::clearRedoStack()
 
 void EditorState::showMenuBar_File()
 {
-	if (ImGui::MenuItem("New", "CTRL+N")) { std::cout << "Creating New File..." << std::endl; }
-	if (ImGui::MenuItem("Save", "CTRL+S")) { std::cout << "Saving..." << std::endl; this->save(); }
-	if (ImGui::MenuItem("Load", "CTRL+O")) { std::cout << "Loading..." << std::endl; this->load(""); }
+	if (ImGui::MenuItem("New", "CTRL+N")) { std::cout << "Creating New File..." << std::endl; this->createMap(); }
+	if (ImGui::MenuItem("Save", "CTRL+S")) { std::cout << "Saving..." << std::endl; this->saveMap(); }
+	if (ImGui::MenuItem("Open", "CTRL+O")) { std::cout << "Opening..." << std::endl; this->openMap(); }
 }
 
 void EditorState::showMenuBar_Edit()

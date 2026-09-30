@@ -74,6 +74,7 @@ private:
 	std::stack<EditorAction*> undoStack;
 	std::stack<EditorAction*> redoStack;
 	std::string filepath = "resource/test.txt";
+	std::string defaultMapFilepath = "resource/"; //Need to look into os filepath handling to make sure this is robust enough
 
 	Map* map;
 
@@ -101,11 +102,13 @@ private:
 
 	void drawBrush(sf::RenderWindow &win);
 
-	int save();
-	int load(std::string filepath);
+	int createMap();
+	int saveMap();
+	int openMap();
 
 	void undo();
 	void redo();
+	void clearUndoStack();
 	void clearRedoStack();
 
 	//Gui

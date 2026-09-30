@@ -115,7 +115,10 @@ Map::~Map()
 
 	tiles.clear();
 
-	delete fogTexture;
+	if (fogTexture)
+	{
+		delete fogTexture;
+	}
 }
 
 

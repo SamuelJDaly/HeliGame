@@ -98,7 +98,7 @@ private:
 	bool drawGrid = true;
 	sf::Color gridColor = sf::Color::Green;
 	std::vector<sf::Vertex> grid;
-	sf::Texture* fogTexture;
+	sf::Texture* fogTexture = nullptr;
 
 
 	//Util
