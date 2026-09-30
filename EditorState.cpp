@@ -87,6 +87,8 @@ void EditorState::init()
 	brushFill.sheet = 0;
 	brushFill.type = 1;
 
+	this->moveCamera({-100.f,-100.f});
+	
 }
 
 bool EditorState::isBelowMap(sf::Vector2<float> pos)
@@ -133,6 +135,17 @@ void EditorState::updateCamera(float dt)
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
 	{
 		this->moveCamera({ panSpeed * currZoom * dt, 0 });
+	}
+}
+
+void EditorState::zoomCamera(float zoom)
+{
+	if (zoom < maxZoom && zoom >= minZoom)
+	{
+
+		mapView.zoom(1 / currZoom);
+		currZoom = zoom;
+		mapView.zoom(currZoom);
 	}
 }
 
@@ -431,6 +444,18 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 		}
 		
 	}
+
+	//## Scroll Wheel
+	if (const auto* mouseScrolled = event->getIf<sf::Event::MouseWheelScrolled>())
+	{
+		if (canZoom)
+		{
+			float zoom = currZoom - (zoomSpeed * mouseScrolled->delta);
+			zoomCamera(zoom);
+		}
+
+	}
+
 
 	//## Key Press
 	if (const auto* keyPress = event->getIf<sf::Event::KeyPressed>())

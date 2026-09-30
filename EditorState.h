@@ -63,11 +63,12 @@ private:
 	sf::View mapView;
 	sf::Vector2<float> cameraOffset = { 0.f,0.f };
 	float panSpeed = 850.f;
-	float maxZoom = 1.5f;
+	float maxZoom = 10.5f;
 	float minZoom = 0.1f;
 	float zoomSpeed = .06f;
 	float zoomStep = .1f;
 	float currZoom = 1.f;
+	bool canZoom = true;
 
 	bool isUnsaved = false;
 	int maxUndoStates = 3;
@@ -99,6 +100,7 @@ private:
 
 	void moveCamera(sf::Vector2<float> offset);
 	void updateCamera(float dt);
+	void zoomCamera(float zoom);
 
 	void drawBrush(sf::RenderWindow &win);
 
