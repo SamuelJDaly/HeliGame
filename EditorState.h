@@ -4,8 +4,11 @@
 #include <set>
 #include <stack>
 
+#include "portable-file-dialogs.h"
+
 #include "Gamestate.h"
 #include "Map.h"
+
 
 //##################################################################################################################
 //		ACTIONS
@@ -70,6 +73,7 @@ private:
 	int maxUndoStates = 3;
 	std::stack<EditorAction*> undoStack;
 	std::stack<EditorAction*> redoStack;
+	std::string filepath = "resource/test.txt";
 
 	Map* map;
 

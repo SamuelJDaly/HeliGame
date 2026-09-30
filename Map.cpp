@@ -294,26 +294,6 @@ int Map::loadFromFile(std::string filename)
 			t->sprite.setOrigin({ t->sprite.getLocalBounds().size.x / 2.f, t->sprite.getLocalBounds().size.y / 2.f });
 			t->pos = { j,i };
 			tiles.at(i)->push_back(t);
-
-			
-			
-
-			/*char c;
-			inFile >> c;
-			inFile >> type >> pass >> cost >> rotation;
-			t->sprite.setTexture(texReg->lookup(textureName));
-			t->sprite.setFrameSize(32, 32);
-			t->sprite.setSize({ (float)tileSize, (float)tileSize });
-			t->sprite.setPosition({ (float)j * textureSize + offset.x, (float)i * textureSize + offset.y });
-			t->sprite.setOrigin({ t->sprite.getLocalBounds().size.x / 2.f, t->sprite.getLocalBounds().size.y / 2.f });
-			t->sprite.setRotation(sf::degrees(rotation));
-			t->type = type;
-			t->sprite.setFrame(type);
-			t->isPassable = pass;
-			t->moveCost = cost;
-			t->pos = { j,i };
-			tiles.at(i)->push_back(t);
-			inFile >> c;*/
 		}
 	}
 
@@ -324,6 +304,52 @@ int Map::loadFromFile(std::string filename)
 
 	std::cout << "Map Loaded..." << std::endl;
 
+	return 1;
+}
+
+int Map::writeToFile(std::string filename)
+{
+	//## Open file
+	std::ofstream outFile;
+	outFile.open(filename);
+
+	if (!outFile.is_open())
+	{
+		std::cout << "Could not open file to write: " << filename << std::endl;
+		return -1;
+	}
+
+	//## Write map data
+	//File type
+	outFile << 100 << std::endl;
+
+	//Num tilesets
+	outFile << (int)tilesets.size() << std::endl;
+
+	//Tilset texture names and sizes
+	for (auto s : tilesets)
+	{
+		outFile << s.first << " " << s.second << std::endl;
+	}
+
+	//Tile size
+	outFile << tileSize << std::endl;
+
+	//Map Dimensions
+	outFile << dimensions.x << " "  << dimensions.y << std::endl;
+
+	//Tile Data
+	for (auto i = 0; i < dimensions.y; i++)
+	{
+		for (auto j = 0; j < dimensions.x; j++)
+		{
+			outFile << *tiles.at(i)->at(j) << " ";
+		}
+		outFile << std::endl;
+	}
+
+	//## Close file
+	outFile.close();
 	return 1;
 }
 

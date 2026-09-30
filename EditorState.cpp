@@ -157,6 +157,21 @@ void EditorState::drawBrush(sf::RenderWindow& win)
 	win.draw(box);
 }
 
+int EditorState::save()
+{
+	if (!map->writeToFile(filepath))
+	{
+		return -1;
+	}
+	return 1;
+}
+
+int EditorState::load(std::string filepath)
+{
+	pfd::message("Hey!", "Just testing...");
+	return 0;
+}
+
 
 void EditorState::undo()
 {
@@ -193,8 +208,8 @@ void EditorState::clearRedoStack()
 void EditorState::showMenuBar_File()
 {
 	if (ImGui::MenuItem("New", "CTRL+N")) { std::cout << "Creating New File..." << std::endl; }
-	if (ImGui::MenuItem("Save", "CTRL+S")) { std::cout << "Saving..." << std::endl; }
-	if (ImGui::MenuItem("Load", "CTRL+O")) { std::cout << "Loading..." << std::endl; }
+	if (ImGui::MenuItem("Save", "CTRL+S")) { std::cout << "Saving..." << std::endl; this->save(); }
+	if (ImGui::MenuItem("Load", "CTRL+O")) { std::cout << "Loading..." << std::endl; this->load(""); }
 }
 
 void EditorState::showMenuBar_Edit()

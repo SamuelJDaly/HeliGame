@@ -70,12 +70,14 @@ struct Tile {
 	inline void draw(sf::RenderWindow& win) {
 		sprite.draw(win);
 	}
+
 };
 
 inline std::ostream& operator<<(std::ostream& os, Tile& t) {
-	os << "[ " << t.sheet << t.type << " " << t.isPassable << " " << t.moveCost << " " << t.sprite.getRotation().asDegrees() << " ]";
+	os << "[ " << t.sheet << " " << t.type << " " << std::noboolalpha << t.isPassable << " " << t.moveCost << " " << t.sprite.getRotation().asDegrees() << " ]";
 	return os;
 }
+
 
 
 
@@ -122,6 +124,7 @@ public:
 	inline int getTileSize() { return tileSize; };
 
 	int loadFromFile(std::string filename);
+	int writeToFile(std::string filename);
 	sf::Vector2<float> getOffset();
 
 	Tile* tileAtIdx(size_t x, size_t y);

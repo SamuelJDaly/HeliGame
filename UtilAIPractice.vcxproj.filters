@@ -146,5 +146,8 @@
     <ClInclude Include="EditorState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="portable-file-dialogs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

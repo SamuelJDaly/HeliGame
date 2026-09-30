@@ -170,6 +170,7 @@
     <ClInclude Include="Item.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="portable-file-dialogs.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Spritesheet.h" />
     <ClInclude Include="State_Heli.h" />
