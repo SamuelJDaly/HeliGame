@@ -230,6 +230,11 @@ int EditorState::openMap()
 	return 0;
 }
 
+void EditorState::exitEditor()
+{
+	this->isFinished = true;
+}
+
 
 void EditorState::undo()
 {
@@ -277,6 +282,7 @@ void EditorState::showMenuBar_File()
 	if (ImGui::MenuItem("New", "CTRL+N")) { std::cout << "Creating New File..." << std::endl; this->createMap(); }
 	if (ImGui::MenuItem("Save", "CTRL+S")) { std::cout << "Saving..." << std::endl; this->saveMap(); }
 	if (ImGui::MenuItem("Open", "CTRL+O")) { std::cout << "Opening..." << std::endl; this->openMap(); }
+	if (ImGui::MenuItem("Exit", "")) { std::cout << "Exiting..." << std::endl; this->exitEditor(); }
 }
 
 void EditorState::showMenuBar_Edit()

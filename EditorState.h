@@ -107,6 +107,7 @@ private:
 	int createMap();
 	int saveMap();
 	int openMap();
+	void exitEditor();
 
 	void undo();
 	void redo();
