@@ -11,6 +11,8 @@ void Engine::initTextures()
 {
 	texReg = new TextureRegistry();
 
+	texReg->loadFromFile(textureManifestPath);
+
 	texReg->addTexture("default", "resource/tex/nope.png");
 	texReg->addTexture("tileset_test", "resource/tex/tileset_test.png");
 	texReg->addTexture("tileset_0", "resource/tex/tileset_1.png");
@@ -151,6 +153,11 @@ void Engine::draw()
 	ImGui::SFML::Render(*win);
 
 	win->display();
+}
+
+void Engine::writeTextures()
+{
+	texReg->writeToFile(textureManifestPath);
 }
 
 

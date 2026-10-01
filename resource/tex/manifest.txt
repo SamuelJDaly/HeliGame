@@ -1,0 +1,13 @@
+default resource/tex/nope.png
+tileset_4 resource/tex/citysheet.png
+tileset_test resource/tex/tileset_test.png
+player resource/tex/redcircle.png
+tileset_0 resource/tex/tileset_1.png
+star resource/tex/star.png
+tileset_3 resource/tex/tileset_3.png
+medkit resource/tex/medkit.png
+bullet resource/tex/bullet.png
+heli_green resource/tex/heli_green.png
+heli_black resource/tex/heli_black.png
+rocket resource/tex/rocket_1.png
+truck_0 resource/tex/truck_0.png

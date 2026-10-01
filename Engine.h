@@ -12,7 +12,7 @@
 /*
 Project: Helicopter Game, Engine
 Created: 04 AUG 2026
-Updated: 19 SEP 2026
+Updated: 01 OCT 2026
 
 Description:
 	This file contains the function and class definitions for the Engine, which has the following responsibilities:
@@ -40,6 +40,7 @@ private:
 	bool isMouseGrabbed = false;
 	TextureRegistry* texReg;
 	sf::Texture defaultTexture;
+	std::string textureManifestPath = "resource/tex/manifest.txt";
 
 	float deltaTime = 0;
 
@@ -59,6 +60,8 @@ public:
 	void poll();
 	void update();
 	void draw();
+
+	void writeTextures();
 
 	bool getRunning();
 };

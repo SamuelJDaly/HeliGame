@@ -53,7 +53,25 @@ sf::Texture* TextureRegistry::lookup(std::string key)
     return nullptr;
 }
 
-void TextureRegistry::fLoad(std::string filepath)
+std::string TextureRegistry::getPath(std::string key)
+{
+    auto it = texturePaths.find(key);
+
+    if (it == texturePaths.end())
+    {
+        std::cout << "Texture not found: [" << key << "]" << std::endl;
+        return "not found";
+    }
+    else
+    {
+        return texturePaths.at(key);
+    }
+
+
+    return "not found";
+}
+
+void TextureRegistry::loadFromFile(std::string filepath)
 {
     /*
         This function reads in a manifest of textures in the form "name textureFile".
@@ -89,6 +107,7 @@ void TextureRegistry::fLoad(std::string filepath)
         }
         else {
             textures.insert({ tokens.at(0), entry });
+            texturePaths.insert({tokens.at(0), tokens.at(1)});
             if (isVerbose) {
                 std::cout << "Texture Loaded: " << tokens.at(0) << ": " << tokens.at(1) << std::endl;
             }
@@ -102,6 +121,28 @@ void TextureRegistry::fLoad(std::string filepath)
     inFile.close();
 }
 
+void TextureRegistry::writeToFile(std::string filepath)
+{
+    //## Open The file
+    std::ofstream outFile;
+    outFile.open(filepath, std::ios::trunc);
+
+    if (!outFile.is_open())
+    {
+        std::cout << "Could not open file for write: " << filepath << std::endl;
+        return;
+    }
+
+    //## Print Texture Info
+    for (auto t : textures)
+    {
+        outFile << t.first << " " << texturePaths.at(t.first) << std::endl;
+    }
+
+    //## Close File
+    outFile.close();
+}
+
 void TextureRegistry::addTexture(std::string key, std::string filepath)
 {
     sf::Texture added;
@@ -112,6 +153,7 @@ void TextureRegistry::addTexture(std::string key, std::string filepath)
     }
 
     textures.insert({ key, added });
+    texturePaths.insert({key, filepath});
 }
 
 void TextureRegistry::setVerbose(bool state)

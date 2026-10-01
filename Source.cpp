@@ -21,5 +21,7 @@ int main(int argc, char** argv) {
 		engine.draw();
 	}
 
+	engine.writeTextures();
+
 	return 0;
 }

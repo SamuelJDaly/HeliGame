@@ -7,7 +7,7 @@
 
 /*
 //Created: 11 JAN 2025
-//Updated: 13 APR 2026
+//Updated: 1 OCT 2026
 //Author: Sam Daly
 
 Description:
@@ -35,6 +35,8 @@ class TextureRegistry
 private:
 	//Data
 	std::unordered_map<std::string, sf::Texture> textures;
+	std::unordered_map<std::string, std::string> texturePaths;
+
 	bool isVerbose = true;
 
 	sf::Texture defaultTexture;
@@ -46,9 +48,10 @@ public:
 
 	//Primary functions
 	sf::Texture* lookup(std::string key);
-	void fLoad(std::string filepath);
+	std::string getPath(std::string key);
+	void loadFromFile(std::string filepath);
+	void writeToFile(std::string filepath);
 	void addTexture(std::string key, std::string filepath);
 	void setVerbose(bool state);
-
 };
 
