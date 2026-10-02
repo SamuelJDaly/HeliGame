@@ -59,8 +59,8 @@ std::string TextureRegistry::getPath(std::string key)
 
     if (it == texturePaths.end())
     {
-        std::cout << "Texture not found: [" << key << "]" << std::endl;
-        return "not found";
+        //std::cout << "Texture not found: [" << key << "]" << std::endl;
+        return "";
     }
     else
     {
@@ -68,7 +68,24 @@ std::string TextureRegistry::getPath(std::string key)
     }
 
 
-    return "not found";
+    return "";
+}
+
+std::string TextureRegistry::getKey(std::string path)
+{
+    auto it = texturePathsReverse.find(path);
+
+    if (it == texturePathsReverse.end())
+    {
+        return "";
+    }
+    else
+    {
+        return texturePathsReverse.at(path);
+    }
+
+
+    return "";
 }
 
 void TextureRegistry::loadFromFile(std::string filepath)
@@ -108,6 +125,7 @@ void TextureRegistry::loadFromFile(std::string filepath)
         else {
             textures.insert({ tokens.at(0), entry });
             texturePaths.insert({tokens.at(0), tokens.at(1)});
+            texturePathsReverse.insert({ tokens.at(1), tokens.at(0) });
             if (isVerbose) {
                 std::cout << "Texture Loaded: " << tokens.at(0) << ": " << tokens.at(1) << std::endl;
             }
@@ -143,17 +161,31 @@ void TextureRegistry::writeToFile(std::string filepath)
     outFile.close();
 }
 
-void TextureRegistry::addTexture(std::string key, std::string filepath)
+int TextureRegistry::addTexture(std::string key, std::string filepath)
 {
     sf::Texture added;
 
     if (!added.loadFromFile(filepath)) {
         std::cout << "Could not add texture: " << filepath << std::endl;
-        return;
+        return 0;
+    }
+
+    auto it = textures.find(key);
+
+    if (it == textures.end())
+    {
+        //Then it does not exist, do nothing
+    }
+    else
+    {
+        //Then it does exist return early
+        return 0;
     }
 
     textures.insert({ key, added });
     texturePaths.insert({key, filepath});
+    texturePathsReverse.insert({filepath, key});
+    return 1;
 }
 
 void TextureRegistry::setVerbose(bool state)

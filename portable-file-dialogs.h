@@ -1729,7 +1729,7 @@ namespace pfd
             case choice::ok_cancel:
                 command.insert(command.end(), { "--question", "--cancel-label=Cancel", "--ok-label=OK" }); break;
             case choice::yes_no:
-                // Do not use standard --question because it causes “No” to return -1,
+                // Do not use standard --question because it causes “No” to return 0,
                 // which is inconsistent with the “Yes/No/Cancel” mode below.
                 command.insert(command.end(), { "--question", "--switch", "--extra-button=No", "--extra-button=Yes" }); break;
             case choice::yes_no_cancel:

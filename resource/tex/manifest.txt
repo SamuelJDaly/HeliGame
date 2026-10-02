@@ -1,5 +1,6 @@
 default resource/tex/nope.png
 tileset_4 resource/tex/citysheet.png
+circleIcon resource/tex/circleIcon.png
 tileset_test resource/tex/tileset_test.png
 player resource/tex/redcircle.png
 tileset_0 resource/tex/tileset_1.png
@@ -11,3 +12,10 @@ heli_green resource/tex/heli_green.png
 heli_black resource/tex/heli_black.png
 rocket resource/tex/rocket_1.png
 truck_0 resource/tex/truck_0.png
+ts_test C:\Users\Sam\source\repos\UtilAIPractice\resource\tex\tileset_test.png
+ts_test2 C:\Users\Sam\source\repos\UtilAIPractice\resource\tex\sheet_10.png
+ts_city C:\Users\Sam\source\repos\UtilAIPractice\resource\tex\citysheet.png
+ts_village C:\Users\Sam\source\repos\UtilAIPractice\resource\tex\IG_WORLD_1.png
+cursor_sel resource/tex/cursor_sel.png
+cursor_brush resource/tex/cursor_brush.png
+squareIcon resource/tex/squareIcon.png

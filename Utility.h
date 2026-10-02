@@ -103,7 +103,7 @@ namespace utl {
 
 			inline int dist(asNode* n) {
 				if (!n) {
-					return -1;
+					return 0;
 				}
 
 				int dx = std::abs(n->x - x);
@@ -115,7 +115,7 @@ namespace utl {
 				//Heuristic distance to given node n,
 				//allows for tweaking behavior of pathfinding
 				if (!n) {
-					return -1;
+					return 0;
 				}
 
 				int dx = std::abs(n->x - x);

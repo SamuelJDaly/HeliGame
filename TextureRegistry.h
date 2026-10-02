@@ -36,6 +36,7 @@ private:
 	//Data
 	std::unordered_map<std::string, sf::Texture> textures;
 	std::unordered_map<std::string, std::string> texturePaths;
+	std::unordered_map<std::string, std::string> texturePathsReverse;
 
 	bool isVerbose = true;
 
@@ -49,9 +50,10 @@ public:
 	//Primary functions
 	sf::Texture* lookup(std::string key);
 	std::string getPath(std::string key);
+	std::string getKey(std::string path);
 	void loadFromFile(std::string filepath);
 	void writeToFile(std::string filepath);
-	void addTexture(std::string key, std::string filepath);
+	int addTexture(std::string key, std::string filepath);
 	void setVerbose(bool state);
 };
 

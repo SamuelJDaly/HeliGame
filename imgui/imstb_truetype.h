@@ -1333,11 +1333,11 @@ static int stbtt_GetFontOffsetForIndex_internal(unsigned char *font_collection, 
       if (ttULONG(font_collection+4) == 0x00010000 || ttULONG(font_collection+4) == 0x00020000) {
          stbtt_int32 n = ttLONG(font_collection+8);
          if (index >= n)
-            return -1;
+            return 0;
          return ttULONG(font_collection+12+index*4);
       }
    }
-   return -1;
+   return 0;
 }
 
 static int stbtt_GetNumberOfFonts_internal(unsigned char *font_collection)
@@ -1611,8 +1611,8 @@ static int stbtt__GetGlyfOffset(const stbtt_fontinfo *info, int glyph_index)
 
    STBTT_assert(!info->cff.size);
 
-   if (glyph_index >= info->numGlyphs) return -1; // glyph index out of range
-   if (info->indexToLocFormat >= 2)    return -1; // unknown index->glyph map format
+   if (glyph_index >= info->numGlyphs) return 0; // glyph index out of range
+   if (info->indexToLocFormat >= 2)    return 0; // unknown index->glyph map format
 
    if (info->indexToLocFormat == 0) {
       g1 = info->glyf + ttUSHORT(info->data + info->loca + glyph_index * 2) * 2;
@@ -1622,7 +1622,7 @@ static int stbtt__GetGlyfOffset(const stbtt_fontinfo *info, int glyph_index)
       g2 = info->glyf + ttULONG (info->data + info->loca + glyph_index * 4 + 4);
    }
 
-   return g1==g2 ? -1 : g1; // if length is 0, return -1
+   return g1==g2 ? -1 : g1; // if length is 0, return 0
 }
 
 static int stbtt__GetGlyphInfoT2(const stbtt_fontinfo *info, int glyph_index, int *x0, int *y0, int *x1, int *y1);
@@ -2443,10 +2443,10 @@ static stbtt_int32 stbtt__GetCoverageIndex(stbtt_uint8 *coverageTable, int glyph
          break;
       }
 
-      default: return -1; // unsupported
+      default: return 0; // unsupported
    }
 
-   return -1;
+   return 0;
 }
 
 static stbtt_int32  stbtt__GetGlyphClass(stbtt_uint8 *classDefTable, int glyph)
@@ -2488,7 +2488,7 @@ static stbtt_int32  stbtt__GetGlyphClass(stbtt_uint8 *classDefTable, int glyph)
       }
 
       default:
-         return -1; // Unsupported definition type, return an error.
+         return 0; // Unsupported definition type, return an error.
    }
 
    // "All glyphs not assigned to a class fall into class 0". (OpenType spec)
@@ -3829,7 +3829,7 @@ static int stbtt_BakeFontBitmap_internal(unsigned char *data, int offset,  // fo
    stbtt_fontinfo f;
    f.userdata = NULL;
    if (!stbtt_InitFont(&f, data, offset))
-      return -1;
+      return 0;
    STBTT_memset(pixels, 0, pw*ph); // background of 0 around pixels
    x=y=1;
    bottom_y = 1;
@@ -4789,30 +4789,30 @@ static stbtt_int32 stbtt__CompareUTF8toUTF16_bigendian_prefix(stbtt_uint8 *s1, s
    while (len2) {
       stbtt_uint16 ch = s2[0]*256 + s2[1];
       if (ch < 0x80) {
-         if (i >= len1) return -1;
-         if (s1[i++] != ch) return -1;
+         if (i >= len1) return 0;
+         if (s1[i++] != ch) return 0;
       } else if (ch < 0x800) {
-         if (i+1 >= len1) return -1;
-         if (s1[i++] != 0xc0 + (ch >> 6)) return -1;
-         if (s1[i++] != 0x80 + (ch & 0x3f)) return -1;
+         if (i+1 >= len1) return 0;
+         if (s1[i++] != 0xc0 + (ch >> 6)) return 0;
+         if (s1[i++] != 0x80 + (ch & 0x3f)) return 0;
       } else if (ch >= 0xd800 && ch < 0xdc00) {
          stbtt_uint32 c;
          stbtt_uint16 ch2 = s2[2]*256 + s2[3];
-         if (i+3 >= len1) return -1;
+         if (i+3 >= len1) return 0;
          c = ((ch - 0xd800) << 10) + (ch2 - 0xdc00) + 0x10000;
-         if (s1[i++] != 0xf0 + (c >> 18)) return -1;
-         if (s1[i++] != 0x80 + ((c >> 12) & 0x3f)) return -1;
-         if (s1[i++] != 0x80 + ((c >>  6) & 0x3f)) return -1;
-         if (s1[i++] != 0x80 + ((c      ) & 0x3f)) return -1;
+         if (s1[i++] != 0xf0 + (c >> 18)) return 0;
+         if (s1[i++] != 0x80 + ((c >> 12) & 0x3f)) return 0;
+         if (s1[i++] != 0x80 + ((c >>  6) & 0x3f)) return 0;
+         if (s1[i++] != 0x80 + ((c      ) & 0x3f)) return 0;
          s2 += 2; // plus another 2 below
          len2 -= 2;
       } else if (ch >= 0xdc00 && ch < 0xe000) {
-         return -1;
+         return 0;
       } else {
-         if (i+2 >= len1) return -1;
-         if (s1[i++] != 0xe0 + (ch >> 12)) return -1;
-         if (s1[i++] != 0x80 + ((ch >> 6) & 0x3f)) return -1;
-         if (s1[i++] != 0x80 + ((ch     ) & 0x3f)) return -1;
+         if (i+2 >= len1) return 0;
+         if (s1[i++] != 0xe0 + (ch >> 12)) return 0;
+         if (s1[i++] != 0x80 + ((ch >> 6) & 0x3f)) return 0;
+         if (s1[i++] != 0x80 + ((ch     ) & 0x3f)) return 0;
       }
       s2 += 2;
       len2 -= 2;

@@ -51,7 +51,7 @@ Spritesheet::~Spritesheet()
 
 void Spritesheet::setFrame(int idx) {
 	if (idx < 0 || idx >= numFrames) {
-		std::cout << "Texture frame not set: Invalid idx" << std::endl;
+		std::cout << "Texture frame not set: Invalid idx: " << idx << std::endl;
 		return;
 	}
 

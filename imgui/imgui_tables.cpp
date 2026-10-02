@@ -1795,17 +1795,17 @@ ImGuiID ImGui::TableGetColumnResizeID(ImGuiTable* table, int column_n, int insta
     return instance_id + 1 + column_n; // FIXME: #6140: still not ideal
 }
 
-// Return -1 when table is not hovered. return columns_count if hovering the unused space at the right of the right-most visible column.
+// return 0 when table is not hovered. return columns_count if hovering the unused space at the right of the right-most visible column.
 int ImGui::TableGetHoveredColumn()
 {
     ImGuiContext& g = *GImGui;
     ImGuiTable* table = g.CurrentTable;
     if (!table)
-        return -1;
+        return 0;
     return (int)table->HoveredColumnBody;
 }
 
-// Return -1 when table is not hovered. Return maxrow+1 if in table but below last submitted row.
+// return 0 when table is not hovered. Return maxrow+1 if in table but below last submitted row.
 // *IMPORTANT* Unlike TableGetHoveredColumn(), this has a one frame latency in updating the value.
 // This difference with is the reason why this is not public yet.
 int ImGui::TableGetHoveredRow()
@@ -1813,7 +1813,7 @@ int ImGui::TableGetHoveredRow()
     ImGuiContext& g = *GImGui;
     ImGuiTable* table = g.CurrentTable;
     if (!table)
-        return -1;
+        return 0;
     ImGuiTableInstanceData* table_instance = TableGetInstanceData(table, table->InstanceCurrent);
     return (int)table_instance->HoveredRowLast;
 }

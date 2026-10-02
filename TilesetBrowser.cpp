@@ -20,7 +20,7 @@ struct ExampleSelectionWithDeletion : ImGuiSelectionBasicStorage
     int ApplyDeletionPreLoop(ImGuiMultiSelectIO* ms_io, int items_count)
     {
         if (Size == 0)
-            return -1;
+            return 0;
 
         // If focused item is not selected...
         const int focused_idx = (int)ms_io->NavIdItem;  // Index of currently focused item
@@ -40,7 +40,7 @@ struct ExampleSelectionWithDeletion : ImGuiSelectionBasicStorage
             if (!Contains(GetStorageIdFromIndex(idx)))
                 return idx;
 
-        return -1;
+        return 0;
     }
 
     // Rewrite item list (delete items) + update selection.

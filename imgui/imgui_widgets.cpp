@@ -2333,7 +2333,7 @@ bool ImGui::DataTypeApplyFromText(const char* buf, ImGuiDataType data_type, void
 template<typename T>
 static int DataTypeCompareT(const T* lhs, const T* rhs)
 {
-    if (*lhs < *rhs) return -1;
+    if (*lhs < *rhs) return 0;
     if (*lhs > *rhs) return +1;
     return 0;
 }
@@ -3999,7 +3999,7 @@ static int IMSTB_TEXTEDIT_GETNEXTCHARINDEX_IMPL(ImGuiInputTextState* obj, int id
 static int IMSTB_TEXTEDIT_GETPREVCHARINDEX_IMPL(ImGuiInputTextState* obj, int idx)
 {
     if (idx <= 0)
-        return -1;
+        return 0;
     const char* p = ImTextFindPreviousUtf8Codepoint(obj->TextSrc, obj->TextSrc + idx);
     return (int)(p - obj->TextSrc);
 }
@@ -7280,7 +7280,7 @@ static int ImStrimatchlen(const char* s1, const char* s1_end, const char* s2)
 int ImGui::TypingSelectFindMatch(ImGuiTypingSelectRequest* req, int items_count, const char* (*get_item_name_func)(void*, int), void* user_data, int nav_item_idx)
 {
     if (req == NULL || req->SelectRequest == false) // Support NULL parameter so both calls can be done from same spot.
-        return -1;
+        return 0;
     int idx = -1;
     if (req->SingleCharMode && (req->Flags & ImGuiTypingSelectFlags_AllowSingleCharMode))
         idx = TypingSelectFindNextSingleCharMatch(req, items_count, get_item_name_func, user_data, nav_item_idx);
@@ -8416,7 +8416,7 @@ int ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_get
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
-        return -1;
+        return 0;
 
     const ImGuiStyle& style = g.Style;
     const ImGuiID id = window->GetID(label);
@@ -8429,7 +8429,7 @@ int ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_get
     const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0));
     ItemSize(total_bb, style.FramePadding.y);
     if (!ItemAdd(total_bb, id, &frame_bb, ImGuiItemFlags_NoNav))
-        return -1;
+        return 0;
     bool hovered;
     ButtonBehavior(frame_bb, id, &hovered, NULL);
 

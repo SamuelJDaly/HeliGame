@@ -26,6 +26,10 @@ void Engine::initTextures()
 	texReg->addTexture("rocket", "resource/tex/rocket_1.png");
 	texReg->addTexture("bullet", "resource/tex/bullet.png");
 	texReg->addTexture("truck_0", "resource/tex/truck_0.png");
+	texReg->addTexture("cursor_sel", "resource/tex/cursor_sel.png");
+	texReg->addTexture("cursor_brush", "resource/tex/cursor_brush.png");
+	texReg->addTexture("circleIcon", "resource/tex/circleIcon.png");
+	texReg->addTexture("squareIcon", "resource/tex/squareIcon.png");
 }
 
 void Engine::initState()

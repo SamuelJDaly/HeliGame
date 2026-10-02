@@ -191,7 +191,7 @@ sf::Vector2<int> Map::posToTileIdx(sf::Vector2<float> pos)
 	//Get index
 	sf::Vector2<int> idx = { (int)std::floor(pos.x / tileSize),(int)std::floor(pos.y / tileSize) };
 
-	//Return -1 for axis if off map to top or left, return -2 if off map to bottom or right (this is insane, but itll work, just trust me bro)
+	//return 0 for axis if off map to top or left, return -2 if off map to bottom or right (this is insane, but itll work, just trust me bro)
 	if (idx.x >= dimensions.x){ idx.x = -2;}
 	if (idx.y >= dimensions.y){ idx.y = -2;}
 	if (idx.x < 0){ idx.x = -1;}
@@ -225,7 +225,7 @@ int Map::loadFromFile(std::string filename)
 	inFile.open(filename);
 	if (!inFile.is_open()) {
 		std::cout << "Could not open map: " << filename << std::endl;
-		return -1;
+		return 0;
 	}
 
 	//Read filetype
@@ -236,7 +236,7 @@ int Map::loadFromFile(std::string filename)
 
 		//LOG_ERROR("Could not load map: " + filename + ", incorrect type...", "");
 
-		return -1;
+		return 0;
 	}
 
 	//Read texture info
@@ -319,7 +319,7 @@ int Map::writeToFile(std::string filename)
 	if (!outFile.is_open())
 	{
 		std::cout << "Could not open file to write: " << filename << std::endl;
-		return -1;
+		return 0;
 	}
 
 	//## Write map data
@@ -506,6 +506,38 @@ std::vector<sf::Vector2<int>> Map::tileIdxInRange(int range, sf::Vector2<int> og
 	}
 
 	return idxs;
+}
+void Map::addTileset(std::pair<std::string, int> set)
+{
+	//Validate new tileset
+	if (!texReg->lookup(set.first) || set.second < 1)
+	{
+		return;
+	}
+
+	tilesets.push_back(set);
+}
+void Map::removeTileset(int idx)
+{
+
+	return; // NOT FULLY IMPLEMENTED
+	//Make sure idx is valid
+	if (idx < 0 || idx >= tilesets.size())
+	{
+		return;
+	}
+
+	//Make sure at least one tileset remains
+	if (tilesets.size() <= 1)
+	{
+		return;
+	}
+
+	//Update tileset list
+	tilesets.erase(tilesets.begin() + idx);
+	
+	//Modify tiles that use deleted set, or set after it in vector
+
 }
 void Map::Poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 {

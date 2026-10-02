@@ -24,7 +24,12 @@ int ActionPaint::execute()
 {
 	if (!target)
 	{
-		return -1;
+		return 0;
+	}
+
+	if (selection.type < 0)
+	{
+		return 0;
 	}
 	
 
@@ -50,6 +55,11 @@ int ActionPaint::execute()
 }
 int ActionPaint::undo()
 {
+	if (positions.size() != originalState.size())
+	{
+		return 0;
+	}
+
 	for (int i = positions.size() - 1; i >= 0; i--)
 	{
 		sf::Vector2<unsigned int> idx = { (unsigned int)positions.at(i).x, (unsigned int)positions.at(i).y};
@@ -66,6 +76,52 @@ int ActionPaint::undo()
 
 	return 0;
 }
+#pragma endregion
+
+#pragma region AddTileset
+
+int ActionAddTileset::execute()
+{
+	if (isRestored)
+	{
+		//Then has been undone, do redo logic
+		//Swap the states
+		Map* temp = ogState;
+		ogState = target;
+		target = temp;
+		isRestored = false;
+	}
+	else
+	{
+		//Then has not been undone, do initial logic
+		//Store og state
+		ogState = new Map(*target);
+
+		//Modify the current state
+		target->addTileset(set);
+	}
+
+	return 1;
+}
+
+
+int ActionAddTileset::undo()
+{
+	if (isRestored)
+	{
+		return 0;
+	}
+
+	isRestored = true;
+
+	//Swap the states back
+	Map* temp = target;
+	target = ogState;
+	ogState = temp;
+
+	return 1;
+}
+
 #pragma endregion
 
 #pragma endregion
@@ -88,6 +144,25 @@ void EditorState::init()
 	brushFill.type = 1;
 
 	this->moveCamera({-100.f,-100.f});
+
+
+	if (!font.openFromFile("resource/font/jmhtype.ttf"))
+	{
+		std::cout << "could not load font!" << std::endl;
+		return;
+	}
+
+	textBrushSheet.setFont(font);
+	textBrushSheet.setCharacterSize(12);
+	textBrushSheet.setFillColor(sf::Color::White);
+	textBrushSheet.setPosition({ 5.f, (float)win->getSize().y - 60 });
+
+	textBrushType.setFont(font);
+	textBrushType.setCharacterSize(12);
+	textBrushType.setFillColor(sf::Color::White);
+	textBrushType.setPosition({ 5.f, (float)win->getSize().y - 40 });
+
+	this->setBrushCircle(2.f);
 	
 }
 
@@ -119,7 +194,9 @@ void EditorState::moveCamera(sf::Vector2<float> offset)
 
 void EditorState::updateCamera(float dt)
 {
-	//Pan
+	sf::Vector2<int> mousePos = sf::Mouse::getPosition(*this->win);
+
+	//Keyboard Pan
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
 	{
 		this->moveCamera({ 0, -1.f * panSpeed * currZoom * dt });
@@ -135,6 +212,15 @@ void EditorState::updateCamera(float dt)
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
 	{
 		this->moveCamera({ panSpeed * currZoom * dt, 0 });
+	}
+
+	//Mouse pan
+	if (isPan)
+	{
+		sf::Vector2<float> panAmt = panStart - sf::Vector2<float>((float)mousePos.x, (float)mousePos.y);
+		panAmt *= (panSpeedMult * currZoom);
+		this->moveCamera(panAmt);
+		panStart = sf::Vector2<float>((float)mousePos.x, (float)mousePos.y);
 	}
 }
 
@@ -156,27 +242,100 @@ void EditorState::drawBrush(sf::RenderWindow& win)
 	sf::Vector2<float> mapViewMousePos = win.mapPixelToCoords(mousePos);
 	sf::Vector2<int> mapIdx = map->posToTileIdx(mapViewMousePos);
 
+
+	std::vector<sf::Vector2<int>> positions = this->getBrushPositions(mapIdx);
+
+
 	if (mapIdx.x < 0 || mapIdx.y < 0)
 	{
 		return;
 	}
 
-	sf::RectangleShape box;
-	box.setFillColor({255,255,255,100});
-	box.setSize({ (float)map->getTileSize(), (float)map->getTileSize()});
-	box.setOrigin(box.getLocalBounds().getCenter());
-	box.setPosition(map->tileIdxToPos(mapIdx));
+	for (auto i = 0; i < positions.size(); i++)
+	{
+		if (map->containsIdx(positions.at(i)))
+		{
+			sf::RectangleShape box;
+			box.setFillColor({ 255,255,255,100 });
+			box.setSize({ (float)map->getTileSize(), (float)map->getTileSize() });
+			box.setOrigin(box.getLocalBounds().getCenter());
+			box.setPosition(map->tileIdxToPos(positions.at(i)));
 
-	win.draw(box);
+			win.draw(box);
+		}
+	}
 }
 
-int EditorState::createMap()
+std::vector<sf::Vector2<int>> EditorState::getBrushPositions(sf::Vector2<int> pos)
+{
+	std::vector<sf::Vector2<int>> res;
+
+	sf::Vector2<int> offset = {pos.x - (int)(brushShape.front().size()/2), pos.y - (int)(brushShape.size() / 2)};
+
+	for (auto i = 0; i < brushShape.size(); i++)
+	{
+		for (auto j = 0; j < brushShape.at(i).size(); j++)
+		{
+			if (brushShape.at(i).at(j) && map->containsIdx({ offset.x + j, offset.y + i }))
+			{
+				res.push_back({offset.x + j, offset.y + i});
+			}
+		}
+	}
+
+	return res;
+}
+
+void EditorState::setBrushCircle(float radius)
+{
+	//NOT CORRECTLY IMPLEMENTED
+	brushShape.clear();
+
+	int centerX = (int)std::round(radius);
+	int centerY = (int)std::round(radius);
+	int size = 2 * (int)std::round(radius);
+	
+	for (auto i = 0; i < size; i++)
+	{
+		brushShape.push_back(std::vector<bool>());
+		for (auto j = 0; j < size; j++)
+		{
+			
+			if (utl::gridDist(j,i,centerX,centerY) <= radius)
+			{
+				brushShape.at(i).push_back(true);
+			}
+			else
+			{
+				brushShape.at(i).push_back(false);
+			}
+		}
+	}
+
+}
+
+void EditorState::setBrushSquare(int width, int height)
+{
+
+	brushShape.clear();
+
+	for (auto i = 0; i < height; i++)
+	{
+		brushShape.push_back(std::vector<bool>());
+		for (auto j = 0; j < width; j++)
+		{
+			brushShape.at(i).push_back(true);
+		}
+	}
+}
+
+int EditorState::createMap(unsigned int width, unsigned int height)
 {
 	delete map;
 	this->clearUndoStack();
 	this->clearRedoStack();
 
-	map = new Map(texReg, 32, { 10,10 }, "tileset_0", 32);
+	map = new Map(texReg, 32, { width,height }, "tileset_0", 32);
 	map->setVeiw(&mapView);
 	map->setGridDraw(true);
 	map->setGridColor(sf::Color::White);
@@ -192,7 +351,7 @@ int EditorState::saveMap()
 		if (!map->writeToFile(selection))
 		{
 			std::cout << "Could not save file..." << std::endl;
-			return -1;
+			return 0;
 		}
 	}
 	else
@@ -217,6 +376,7 @@ int EditorState::openMap()
 			//Then swap maps
 			delete map;
 			map = newMap;
+			filepath = selection.front();
 			this->clearRedoStack();
 			this->clearUndoStack();
 		}
@@ -279,10 +439,38 @@ void EditorState::clearRedoStack()
 
 void EditorState::showMenuBar_File()
 {
-	if (ImGui::MenuItem("New", "CTRL+N")) { std::cout << "Creating New File..." << std::endl; this->createMap(); }
+	if (ImGui::MenuItem("New", "CTRL+N")) { doShowGuiNewMap = true; }
 	if (ImGui::MenuItem("Save", "CTRL+S")) { std::cout << "Saving..." << std::endl; this->saveMap(); }
 	if (ImGui::MenuItem("Open", "CTRL+O")) { std::cout << "Opening..." << std::endl; this->openMap(); }
 	if (ImGui::MenuItem("Exit", "")) { std::cout << "Exiting..." << std::endl; this->exitEditor(); }
+}
+
+void EditorState::ShowMenuBar_Options()
+{
+	//if (ImGui::MenuItem("Show Grid", "CTRL+G")) {}
+	ImGui::Text("Grid Options");
+	ImGui::Separator();
+	if (ImGui::Checkbox("Show Grid", &showMapGrid)) { map->setGridDraw(showMapGrid); }
+
+	if (ImGui::BeginMenu("Colors"))
+	{
+		float sz = ImGui::GetTextLineHeight();
+		for (int i = 0; i < gridColorOptions.size(); i++)
+		{
+			const char* name = gridColorNames.at(i).c_str();
+			sf::Color col = gridColorOptions.at(i);
+			ImVec2 p = ImGui::GetCursorScreenPos();
+			ImGui::GetWindowDrawList()->AddRectFilled(p, ImVec2(p.x + sz, p.y + sz), IM_COL32(col.r, col.g, col.b, col.a));
+			ImGui::Dummy(ImVec2(sz, sz));
+			ImGui::SameLine();
+			if (ImGui::MenuItem(name))
+			{
+				map->setGridColor(col);
+			}
+		}
+		ImGui::EndMenu();
+	}
+
 }
 
 void EditorState::showMenuBar_Edit()
@@ -297,7 +485,7 @@ void EditorState::showMenuBar_Edit()
 
 void EditorState::showMenuBar_Window()
 {
-	if (ImGui::MenuItem("Tile Pallette")) { doShowTilePallete = true; }
+	if (ImGui::MenuItem("Tile Pallette")) { doShowTileEditor = true; }
 }
 
 void EditorState::showGuiMenuBar()
@@ -308,6 +496,11 @@ void EditorState::showGuiMenuBar()
 		if (ImGui::BeginMenu("File"))
 		{
 			showMenuBar_File();
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Options"))
+		{
+			ShowMenuBar_Options();
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Edit"))
@@ -324,18 +517,346 @@ void EditorState::showGuiMenuBar()
 	}
 }
 
-void EditorState::showGuiPalleteTool()
+void EditorState::showGuiNewMap(bool* pOpen)
 {
 	ImGuiWindowFlags windowFlags = 0;
-	windowFlags |= ImGuiWindowFlags_NoResize;
+
+
+	ImGui::SetWindowPos(ImVec2(0, 30));
+	ImGui::SetWindowSize(ImVec2(300, 400.f));
+
+	ImGui::Begin("newMap", pOpen, windowFlags);
+
+	//Name
+	ImGui::Text("Map Name:");
+	ImGui::SameLine();
+	ImGui::InputText("###nma", newMapName, IM_ARRAYSIZE(newMapName));
+
+	//Size
+	ImGui::Text("Width:");
+	ImGui::SameLine();
+	ImGui::InputInt("###nmb",&newMapWidth);
+	ImGui::Text("Height:");
+	ImGui::SameLine();
+	ImGui::InputInt("###nmc", &newMapHeight);
+
+	//Buttons
+	if (ImGui::Button("Ok##nmd"))
+	{
+		this->createMap((unsigned int)newMapWidth, (unsigned int)newMapHeight);
+		//Set map filename NOT IMPLEMENTED
+
+		*pOpen = false;
+		strncpy(newMapName, "", 512);
+		newMapWidth = 10;
+		newMapHeight = 10;
+	}
+
+	ImGui::SameLine();
+
+
+	if (ImGui::Button("Cancel##nmd"))
+	{
+		*pOpen = false;
+		strncpy(newMapName,"",512);
+		newMapWidth = 10;
+		newMapHeight = 10;
+	}
+
+	ImGui::End();
+}
+
+void EditorState::showGuiTileEditor(bool* pOpen)
+{
+	ImGuiWindowFlags windowFlags = 0;
 	
 
 	ImGui::SetWindowPos(ImVec2(0, 30));
-	ImGui::SetWindowSize(ImVec2(300, 150));
+	ImGui::SetWindowSize(ImVec2(300, 400.f));
 
-	ImGui::Begin("palleteTool", &doShowDemoGui, windowFlags);
+	ImGui::Begin("palleteTool", pOpen, windowFlags);
+	
+	/*
+	Components:
+		- Dropdown to select from available tilesets
+		- Buttons to add and remove tilesets
+		- Control to change tilesets texture size
+
+		-grid of controls to select index from active tilesets
+		-controls to affect grid layout (really just zoom)
+	*/
+
+	//Tileset selector (Combo Box)
+	ImGuiComboFlags flags = 0;
+	std::vector<std::pair<std::string, int>> tilesets = map->getTilesets();
+
+	const char* combo_preview_value = tilesets.at(tilsetSelIdx).first.c_str();
+	if (ImGui::BeginCombo("tilsetSel", combo_preview_value, flags))
+	{
+		for (int i = 0; i < tilesets.size(); i++)
+		{
+			const bool is_selected = (tilsetSelIdx == i);
+			if (ImGui::Selectable(tilesets.at(i).first.c_str(), is_selected))
+			{
+				tilsetSelIdx = i;
+				brushFill.sheet = i;
+				brushFill.type = -1;
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+				
+		}
+		ImGui::EndCombo();
+	}
+
+
+	//Tileset Add and remove (buttons)
+	if (ImGui::Button("Add"))
+	{
+		//Show Add Tilset Dialog
+		ImVec2 pos = ImGui::GetWindowPos();
+		pos.x += (.25f * ImGui::GetWindowWidth());
+		pos.y += (.25f * ImGui::GetWindowHeight());
+		tsAddPos = pos;
+		doShowTilesetAdd = true;
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Rem") && tilesets.size() > 1)
+	{
+		//Show Remove Tileset Dialog
+	}
+
+	//Tileset Texture size
+
+
+	//Tilest Tile Select Grid
+	float padding = 1.f;
+	int cols = 5; //Set
+	int rows = 1; //Calculated
+
+	sf::Texture* tex = texReg->lookup(tilesets.at(tilsetSelIdx).first);
+	unsigned int framesize = (unsigned int)tilesets.at(tilsetSelIdx).second;
+
+	std::vector<sf::Sprite> tiles;
+
 	
 
+	//#tiles = (sheet size.x / texturesize) * (sheetsize.y / texturesize)
+	int numTiles = (tex->getSize().x / framesize) * (tex->getSize().y / framesize);
+
+	cols = (tex->getSize().x / framesize);
+
+	if (numTiles < cols)
+	{
+		cols = numTiles;
+	}
+
+	//Rows = # tiles / cols
+	rows = numTiles / cols;
+
+	
+
+	//Size of each tile = (window width - margins - tile padding) / cols
+	float sz = (300.f - 20.f - padding) / (float)cols;
+
+	Spritesheet sheet;
+	sheet.setTexture(tex);
+	sheet.setFrameSize(framesize, framesize);
+
+	sf::Vector2f gridOffset = { 0,0 };
+
+	ImGui::Separator();
+
+	ImGui::BeginChild("tileGrid",ImVec2(300.f-40.f, 300.f-40.f));
+
+	for (auto i = 0; i < rows; i++)
+	{
+		for (auto j = 0; j < cols; j++)
+		{
+			float posX = gridOffset.x + (j * (sz + 10.f));
+			float posY = gridOffset.y + (i * (sz + 10.f));
+			ImGui::SetCursorPos(ImVec2(posX,posY));
+			int flatIdx = (i * cols) + j;
+			/*ImVec2 p = ImGui::GetCursorScreenPos();
+			ImGui::GetWindowDrawList()->AddImage(tex,);
+			ImGui::Dummy(ImVec2(sz, sz));*/
+			sheet.setFrame(flatIdx);
+			sf::Sprite s(*tex);
+			s.setTextureRect(sheet.getTextureRect());
+			sheet.setScale({sz / s.getLocalBounds().size.x, sz / s.getLocalBounds().size.y});
+			
+			const bool is_selected = (tileSelIdx == flatIdx);
+			ImGui::PushID(flatIdx);
+			/*if (ImGui::Selectable("###", is_selected,0,ImVec2(sz,sz)))
+			{
+				tileSelIdx = flatIdx;
+				brushFill.type = flatIdx;
+			}*/
+
+
+			if (ImGui::ImageButton("###", s, {sz,sz}))
+			{
+				tileSelIdx = flatIdx;
+				brushFill.type = flatIdx;
+			}
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if (is_selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+
+			
+			ImGui::PopID();
+		}
+	} //End grid
+
+	//## Cursor Buttons
+	sf::Sprite selIcon(*texReg->lookup("cursor_sel"));
+	sf::Sprite circleIcon(*texReg->lookup("circleIcon"));
+	sf::Sprite squareIcon(*texReg->lookup("squareIcon"));
+	float size = ImGui::GetTextLineHeight();
+	if (ImGui::ImageButton("###tez", selIcon, ImVec2(size,size)))
+	{
+		isPaintToolSelected = false;
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::ImageButton("###tey", circleIcon, ImVec2(size, size)))
+	{
+		isPaintToolSelected = true;
+		this->setBrushCircle(1.7);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::ImageButton("###tex", squareIcon, ImVec2(size, size)))
+	{
+		isPaintToolSelected = true;
+		this->setBrushSquare(1,1);
+	}
+
+
+	ImGui::EndChild();
+
+	ImGui::End();
+}
+
+void EditorState::showGuiTilesetAdd(bool* pOpen)
+{
+	ImGuiWindowFlags windowFlags = 0;
+
+
+	//ImGui::SetWindowPos(tsAddPos);
+	//ImGui::SetWindowSize(ImVec2(400, 100.f));
+
+	
+
+	ImGui::Begin("tilesetAdd", pOpen, windowFlags);
+
+
+	//Image file select
+	ImGui::Text("Texture File:");
+	ImGui::SameLine();
+	ImGui::InputText("###aa",tilesetTexturePath,IM_ARRAYSIZE(tilesetTexturePath));
+	if (ImGui::Button("Browse"))
+	{
+		auto selection = pfd::open_file("Select a file", "", {".png"}, false).result();
+		
+		if (!selection.empty())
+		{
+
+			std::strncpy(tilesetTexturePath, selection.front().c_str(), 512);
+
+			//Check if texture is already used under a different name
+			std::string existingName = texReg->getKey(tilesetTexturePath);
+			if (existingName != "")
+			{
+				//Then it exists, autofill the name
+				std::strncpy(tilesetTextureName, existingName.c_str(), 512);
+			}
+		}
+	}
+
+	//Tileset Name
+	ImGui::Text("Tileset Name:");
+	ImGui::SameLine();
+	ImGui::InputText("###za", tilesetTextureName, IM_ARRAYSIZE(tilesetTextureName));
+
+	//Size select
+	ImGui::Text("Texture Size: ");
+	ImGui::SameLine();
+	ImGui::InputInt("###ab", &tsAddTexSize);
+
+	//Add and Cancel Button
+	if (ImGui::Button("Add##ac"))
+	{
+		std::string tsetName = tilesetTextureName;
+		std::string tsetTexPath = tilesetTexturePath;
+
+		
+
+		//Validate inputs
+		if (tsetName == "")
+		{
+			std::strncpy(tilesetTexturePath, "", 512);
+			std::strncpy(tilesetTextureName, "", 512);
+			tsAddTexSize = 32;
+			*pOpen = false;
+			return;
+		}
+
+		//Check if key is in registry
+		if (texReg->getPath(tilesetTexturePath) == "")
+		{
+			//Then check if the texture path is in the registy
+			if (texReg->getKey(tilesetTexturePath) == "")
+			{
+				//Then add the new texture and key to the registry
+				texReg->addTexture(tilesetTextureName, tilesetTexturePath);
+			}
+		}
+
+		//Only add unique tilesets
+		bool containsKey = false;
+		for (auto s : map->getTilesets())
+		{
+			if (s.first == tilesetTextureName)
+			{
+				containsKey = true;
+				break;
+			}
+		}
+
+		if (!containsKey)
+		{
+			map->addTileset({ tsetName,tsAddTexSize });
+		}
+
+		
+		std::strncpy(tilesetTexturePath, "", 512);
+		std::strncpy(tilesetTextureName, "", 512);
+		tsAddTexSize = 32;
+		*pOpen = false;
+
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Cancel##ad"))
+	{
+		std::strncpy(tilesetTexturePath, "", 512);
+		std::strncpy(tilesetTextureName, "", 512);
+		tsAddTexSize = 32;
+		*pOpen = false;
+	}
 
 	ImGui::End();
 }
@@ -364,8 +885,14 @@ void EditorState::update(float dt)
 	if (doShowDemoGui) { ImGui::ShowDemoWindow(); }
 
 	this->showGuiMenuBar();
-	if(doShowTilePallete){ this->showGuiPalleteTool(); }
+	if(doShowTileEditor){ this->showGuiTileEditor(&doShowTileEditor); }
+	if (doShowTilesetAdd) { this->showGuiTilesetAdd(&doShowTilesetAdd); }
+	if (doShowGuiNewMap) { this->showGuiNewMap(&doShowGuiNewMap); }
+
 	
+
+	textBrushSheet.setString("Sheet: " + std::to_string(brushFill.sheet));
+	textBrushType.setString("Type: " + std::to_string(brushFill.type));
 
 	//Painting
 	if (isPainting)
@@ -374,9 +901,11 @@ void EditorState::update(float dt)
 		currIdx = map->posToTileIdx(mapViewMousePos);
 		if (currIdx != lastIdx && map->containsIdx(currIdx))
 		{
-			paintedTiles.push_back(currIdx);
-			originalStates.push_back(Tile(*map->tileAtIdx((size_t)currIdx.x, (size_t)currIdx.y)));
-			ActionPaint singlePaintAction = ActionPaint(map, { currIdx }, brushFill);
+			for (auto p : this->getBrushPositions(currIdx)) { 
+				paintedTiles.push_back(p); 
+				originalStates.push_back(Tile(*map->tileAtIdx((size_t)p.x, (size_t)p.y)));
+			}
+			ActionPaint singlePaintAction = ActionPaint(map, this->getBrushPositions(currIdx), brushFill);
 			singlePaintAction.execute();
 		}
 	}
@@ -394,6 +923,12 @@ void EditorState::update(float dt)
 
 void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 {
+	ImGuiIO& io = ImGui::GetIO();
+
+	sf::Vector2<int> mousePos = sf::Mouse::getPosition(win);
+	win.setView(mapView);
+	sf::Vector2<float> mapViewMousePos = win.mapPixelToCoords(mousePos);
+
 	//## Mouse press
 	if (const auto* mouseButton = event->getIf<sf::Event::MouseButtonPressed>())
 	{
@@ -404,11 +939,21 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 		//Left Button
 		if (mouseButton->button == sf::Mouse::Button::Left)
 		{
-			if (isPaintToolSelected && !isPainting && map->containsPos(mapViewMousePos))
+			if (!io.WantCaptureMouse)
 			{
-				isPainting = true; //Set painting flag
-				//undoStates.push(currMap); //push current state to undo stack
+				if (isPaintToolSelected && !isPainting && map->containsPos(mapViewMousePos))
+				{
+					isPainting = true; //Set painting flag
+				}
 			}
+			
+		}
+
+		//Middle Button
+		if (!io.WantCaptureMouse && mouseButton->button == sf::Mouse::Button::Middle)
+		{
+			isPan = true;
+			panStart = {(float)mousePos.x, (float)mousePos.y};
 		}
 
 	}
@@ -416,9 +961,7 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 	//## Mouse release
 	if (const auto* mouseButton = event->getIf<sf::Event::MouseButtonReleased>())
 	{
-		sf::Vector2<int> mousePos = sf::Mouse::getPosition(win);
-		win.setView(mapView);
-		sf::Vector2<float> mapViewMousePos = win.mapPixelToCoords(mousePos);
+		
 
 		//Left
 		if (mouseButton->button == sf::Mouse::Button::Left)
@@ -437,24 +980,31 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 			}
 		}
 
+		//Middle Button
 		if (mouseButton->button == sf::Mouse::Button::Middle)
 		{
 			//Dropper
 			auto idx = map->posToTileIdx(mapViewMousePos);
 			if (map->containsIdx(idx))
 			{
-				std::cout << "Brush Sheet Before: " << brushFill.sheet << " | Brush Type Before: " << brushFill.type << std::endl;
+				//std::cout << "Brush Sheet Before: " << brushFill.sheet << " | Brush Type Before: " << brushFill.type << std::endl;
 				brushFill = Tile(*map->tileAtIdx((size_t)(idx.x), (size_t)(idx.y)));
-				std::cout << "Brush Sheet After: " << brushFill.sheet << " | Brush Type After: " << brushFill.type << std::endl;
+				//std::cout << "Brush Sheet After: " << brushFill.sheet << " | Brush Type After: " << brushFill.type << std::endl;
+			}
+
+			//Pan
+			if (isPan)
+			{
+				isPan = false;
 			}
 		}
-		
 	}
+
 
 	//## Scroll Wheel
 	if (const auto* mouseScrolled = event->getIf<sf::Event::MouseWheelScrolled>())
 	{
-		if (canZoom)
+		if (canZoom && !io.WantCaptureMouse)
 		{
 			float zoom = currZoom - (zoomSpeed * mouseScrolled->delta);
 			zoomCamera(zoom);
@@ -494,8 +1044,12 @@ void EditorState::draw(sf::RenderWindow& win)
 {
 	win.setView(mapView);
 	map->Draw(win);
-	if (isBrushDrawn) { this->drawBrush(win); }
+	if (isPaintToolSelected) { this->drawBrush(win); }
 
+
+	win.setView(win.getDefaultView());
+	win.draw(textBrushSheet);
+	win.draw(textBrushType);
 }
 
 

@@ -12,7 +12,7 @@
 /*
 Project: Helicopter Game, Map System
 Created: 04 AUG 2026
-Updated: 19 SEP 2026
+Updated: 1 OCT 2026
 
 Description:
 	The Map system allows a grid of tiles to be manipulated and displayed. It is intended to be adaptable to a variety of game styles, and is
@@ -152,6 +152,10 @@ public:
 	inline void setGridDraw(bool state) { drawGrid = state; }
 
 	inline sf::Vector2<unsigned int> getDimensions() { return dimensions; }
+
+	inline std::vector<std::pair<std::string, int>> getTilesets() { return tilesets; }
+	void addTileset(std::pair<std::string, int> set);
+	void removeTileset(int idx);
 	
 	void Poll(sf::RenderWindow& win, std::optional<sf::Event> event);
 	void Update();

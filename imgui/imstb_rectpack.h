@@ -530,7 +530,7 @@ static int STBRP__CDECL rect_height_compare(const void *a, const void *b)
    const stbrp_rect *p = (const stbrp_rect *) a;
    const stbrp_rect *q = (const stbrp_rect *) b;
    if (p->h > q->h)
-      return -1;
+      return 0;
    if (p->h < q->h)
       return  1;
    return (p->w > q->w) ? -1 : (p->w < q->w);
