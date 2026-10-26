@@ -329,13 +329,13 @@ void EditorState::setBrushSquare(int width, int height)
 	}
 }
 
-int EditorState::createMap(unsigned int width, unsigned int height)
+int EditorState::createMap(unsigned int width, unsigned int height, int tilesize)
 {
 	delete map;
 	this->clearUndoStack();
 	this->clearRedoStack();
 
-	map = new Map(texReg, 32, { width,height }, "tileset_0", 32);
+	map = new Map(texReg, tilesize, { width,height }, "tileset_0", 32);
 	map->setVeiw(&mapView);
 	map->setGridDraw(true);
 	map->setGridColor(sf::Color::White);
@@ -532,7 +532,7 @@ void EditorState::showGuiNewMap(bool* pOpen)
 	ImGui::SameLine();
 	ImGui::InputText("###nma", newMapName, IM_ARRAYSIZE(newMapName));
 
-	//Size
+	//Dimensions
 	ImGui::Text("Width:");
 	ImGui::SameLine();
 	ImGui::InputInt("###nmb",&newMapWidth);
@@ -540,16 +540,24 @@ void EditorState::showGuiNewMap(bool* pOpen)
 	ImGui::SameLine();
 	ImGui::InputInt("###nmc", &newMapHeight);
 
+	//Tilesize
+	ImGui::Text("Tile Size:");
+	ImGui::SameLine();
+	ImGui::InputInt("###nmac", &newMapTilesize);
+
+
+
 	//Buttons
 	if (ImGui::Button("Ok##nmd"))
 	{
-		this->createMap((unsigned int)newMapWidth, (unsigned int)newMapHeight);
+		this->createMap((unsigned int)newMapWidth, (unsigned int)newMapHeight, newMapTilesize);
 		//Set map filename NOT IMPLEMENTED
 
 		*pOpen = false;
 		strncpy(newMapName, "", 512);
 		newMapWidth = 10;
 		newMapHeight = 10;
+		newMapTilesize = 32;
 	}
 
 	ImGui::SameLine();
@@ -561,6 +569,7 @@ void EditorState::showGuiNewMap(bool* pOpen)
 		strncpy(newMapName,"",512);
 		newMapWidth = 10;
 		newMapHeight = 10;
+		newMapTilesize = 32;
 	}
 
 	ImGui::End();
@@ -669,11 +678,14 @@ void EditorState::showGuiTileEditor(bool* pOpen)
 	sheet.setTexture(tex);
 	sheet.setFrameSize(framesize, framesize);
 
-	sf::Vector2f gridOffset = { 0,0 };
+	sf::Vector2f gridOffset = { 5,5 };
 
 	ImGui::Separator();
 
-	ImGui::BeginChild("tileGrid",ImVec2(300.f-40.f, 300.f-40.f));
+	ImGuiChildFlags f = 0;
+	f |= ImGuiChildFlags_Border;
+
+	ImGui::BeginChild("tileGrid",ImVec2(ImGui::GetWindowSize().x - 20.f, 300.f - 40.f), f);
 
 	for (auto i = 0; i < rows; i++)
 	{
@@ -717,12 +729,14 @@ void EditorState::showGuiTileEditor(bool* pOpen)
 		}
 	} //End grid
 
+	ImGui::EndChild();
+
 	//## Cursor Buttons
 	sf::Sprite selIcon(*texReg->lookup("cursor_sel"));
 	sf::Sprite circleIcon(*texReg->lookup("circleIcon"));
 	sf::Sprite squareIcon(*texReg->lookup("squareIcon"));
 	float size = ImGui::GetTextLineHeight();
-	if (ImGui::ImageButton("###tez", selIcon, ImVec2(size,size)))
+	if (ImGui::ImageButton("###tez", selIcon, ImVec2(size, size)))
 	{
 		isPaintToolSelected = false;
 	}
@@ -740,11 +754,8 @@ void EditorState::showGuiTileEditor(bool* pOpen)
 	if (ImGui::ImageButton("###tex", squareIcon, ImVec2(size, size)))
 	{
 		isPaintToolSelected = true;
-		this->setBrushSquare(1,1);
+		this->setBrushSquare(1, 1);
 	}
-
-
-	ImGui::EndChild();
 
 	ImGui::End();
 }

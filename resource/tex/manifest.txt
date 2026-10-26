@@ -1,14 +1,14 @@
 default resource/tex/nope.png
-tileset_4 resource/tex/citysheet.png
 circleIcon resource/tex/circleIcon.png
 tileset_test resource/tex/tileset_test.png
-player resource/tex/redcircle.png
+tileset_4 resource/tex/citysheet.png
 tileset_0 resource/tex/tileset_1.png
-star resource/tex/star.png
+player resource/tex/redcircle.png
 tileset_3 resource/tex/tileset_3.png
+star resource/tex/star.png
 medkit resource/tex/medkit.png
-bullet resource/tex/bullet.png
 heli_green resource/tex/heli_green.png
+bullet resource/tex/bullet.png
 heli_black resource/tex/heli_black.png
 rocket resource/tex/rocket_1.png
 truck_0 resource/tex/truck_0.png
@@ -19,3 +19,5 @@ ts_village C:\Users\Sam\source\repos\UtilAIPractice\resource\tex\IG_WORLD_1.png
 cursor_sel resource/tex/cursor_sel.png
 cursor_brush resource/tex/cursor_brush.png
 squareIcon resource/tex/squareIcon.png
+ts_rando C:\Users\Sam\source\repos\UtilAIPractice\resource\tex\owlishmedia_pixel_tiles.png
+rocket2 resource/tex/rocket_2.png

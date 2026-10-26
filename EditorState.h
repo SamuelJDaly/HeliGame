@@ -110,6 +110,7 @@ class EditorState : public Gamestate
 {
 private:
 	//## Data
+	//Camera
 	sf::View mapView;
 	sf::Vector2<float> cameraOffset = { 0.f,0.f };
 	float panSpeed = 850.f;
@@ -123,7 +124,7 @@ private:
 	bool isPan = false;
 	sf::Vector2f panStart = { 0.f,0.f };
 
-
+	//Map Control
 	bool isUnsaved = false;
 	int maxUndoStates = 3;
 	std::stack<EditorAction*> undoStack;
@@ -134,12 +135,18 @@ private:
 	char newMapName[512] = "";
 	int newMapWidth = 10;
 	int newMapHeight = 10;
+	int newMapTilesize = 32;
 
 	Map* map;
 
+	//Misc
 	bool doShowDemoGui = false;
 	float topBarHeight = 20.f;
+	std::vector<sf::Color> gridColorOptions = { sf::Color::Black, sf::Color::White, sf::Color::Red, sf::Color::Green, sf::Color::Blue, sf::Color::Yellow };
+	std::vector<std::string> gridColorNames = { "Black", "White", "Red", "Green", "Blue", "Yeller" };
+	bool showMapGrid = true;
 
+	//Tile Editor
 	bool doShowTileEditor = false;
 	Tile brushFill;
 	std::vector<std::vector<bool>> brushShape = { {true} };
@@ -148,9 +155,7 @@ private:
 	bool isPaintToolSelected = false;
 	bool isPainting = false;
 	bool isBrushDrawn = false;
-	bool showMapGrid = true;
-	std::vector<sf::Color> gridColorOptions = { sf::Color::Black, sf::Color::White, sf::Color::Red, sf::Color::Green, sf::Color::Blue, sf::Color::Yellow };
-	std::vector<std::string> gridColorNames = {"Black", "White", "Red", "Green", "Blue", "Yeller"};
+	
 	int tilsetSelIdx = 0;
 	int tileSelIdx = -1;
 	sf::Font font;
@@ -180,7 +185,7 @@ private:
 	void setBrushCircle(float radius);
 	void setBrushSquare(int width, int height);
 
-	int createMap(unsigned int width, unsigned int height);
+	int createMap(unsigned int width, unsigned int height, int tileSize);
 	int saveMap();
 	int openMap();
 	void exitEditor();

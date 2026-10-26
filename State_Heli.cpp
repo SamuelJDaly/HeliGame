@@ -59,7 +59,10 @@ void State_Heli::init() {
 	view_map.setSize({ (float)win->getSize().x, (float)win->getSize().y });
 
 	map = new Map(texReg);
-	map->loadFromFile("resource/map_multi.txt");
+	if (!map->loadFromFile("resource/crap.txt"))
+	{
+		map->loadFromFile("resource/map_multi.txt");
+	}
 	map->setGridDraw(false);
 
 	//## Player
@@ -68,7 +71,7 @@ void State_Heli::init() {
 	//player->setPos({ win->getSize().x / 2.f , win->getSize().y / 2.f });
 	player->setPos(view_map.getCenter());
 	player->setMapView(&view_map);
-	player->setRocketTexture(texReg->lookup("rocket"));
+	player->setRocketTexture(texReg->lookup("rocket2"));
 	player->setBulletTexture(texReg->lookup("bullet"));
 
 	Animation heliAnim{0,7,0,60,false,true,-1,1};

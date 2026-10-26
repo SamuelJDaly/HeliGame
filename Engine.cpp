@@ -24,6 +24,7 @@ void Engine::initTextures()
 	texReg->addTexture("heli_green", "resource/tex/heli_green.png");
 	texReg->addTexture("heli_black", "resource/tex/heli_black.png");
 	texReg->addTexture("rocket", "resource/tex/rocket_1.png");
+	texReg->addTexture("rocket2", "resource/tex/rocket_2.png");
 	texReg->addTexture("bullet", "resource/tex/bullet.png");
 	texReg->addTexture("truck_0", "resource/tex/truck_0.png");
 	texReg->addTexture("cursor_sel", "resource/tex/cursor_sel.png");
@@ -35,11 +36,11 @@ void Engine::initTextures()
 void Engine::initState()
 {
 	//currState = new State_Game(texReg, win);
-	//currState = new State_Heli(texReg, this->win);
+	currState = new State_Heli(texReg, this->win);
 	//currState = new State_LevelEditor(texReg, this->win);
 	//currState = new State_Editor(textureHandler, this->win);
 	//currState = new State_Menu(textureHandler, this->win);
-	currState = new EditorState(texReg, this->win);
+	//currState = new EditorState(texReg, this->win);
 }
 
 Engine::Engine()
