@@ -91,11 +91,10 @@ private:
 	//## Util
 	void clearLayers();
 	int readLayer(std::ifstream &inFile);
-	int writeLayer();
+	int writeLayer(std::ofstream &outFile, int layer);
 
 public:
 	//## Constructor and Destructor
-	Tilemap();
 	Tilemap(int width, int height, int layers, int tileSize, TextureRegistry* textureRegistry);
 	~Tilemap();
 

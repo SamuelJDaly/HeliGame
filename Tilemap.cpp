@@ -213,9 +213,6 @@ void tmap::TileLayer::draw(sf::RenderWindow& win)
 
 #pragma region TileMap
 
-
-
-
 void tmap::Tilemap::clearLayers()
 {
     //De-allocate layer memory
@@ -267,6 +264,48 @@ int tmap::Tilemap::readLayer(std::ifstream& inFile)
     }
 
     return 1;
+}
+
+int tmap::Tilemap::writeLayer(std::ofstream& outFile, int layer)
+{
+    if (!outFile.is_open())
+    {
+        return -1;
+    }
+
+    //Write tiles
+    for (auto i = 0; i < dimensions.y; i++)
+    {
+        for (auto j = 0; j < dimensions.x; j++)
+        {
+            //[sheet type isSolid] ...
+            Tile t = layers.at(layer)->getTileAt(j,i);
+            outFile << "[" << t.sheet << " " << t.type << " " << std::noboolalpha << t.isSolid << "]";
+        }
+        outFile << std::endl;
+    }
+
+
+
+    return 1;
+}
+
+tmap::Tilemap::Tilemap(int width, int height, int layers, int tileSize, TextureRegistry* textureRegistry)
+{
+    this->dimensions = {width, height, layers};
+    this->tileSize = tileSize;
+    this->texReg = textureRegistry;
+
+    for (auto i = 0; i < layers; i++)
+    {
+        TileLayer* l = new TileLayer(width, height, tileSize);
+        this->layers.push_back(l);
+    }
+}
+
+tmap::Tilemap::~Tilemap()
+{
+    this->clearLayers();
 }
 
 int tmap::Tilemap::loadFromFile(std::string filename)
@@ -332,5 +371,49 @@ int tmap::Tilemap::loadFromFile(std::string filename)
     std::cout << "LOAD COMPLETE" << std::endl;
 }
 
+int tmap::Tilemap::writeToFile(std::string filename)
+{
+    std::cout << "WRITING MAP FILE..." << std::endl;
+    //## Open File
+    std::ofstream outFile;
+    outFile.open(filename);
+
+    if (!outFile.is_open())
+    {
+        std::cout << "Could not open map file: [" << filename << "] for write..." << std::endl;
+        return -1;
+    }
+
+    //## Write Data
+    //Write header
+    outFile << "200" << std::endl;
+
+    //Num tilesets
+    outFile << (int)tilesets.size() << std::endl;
+
+    //Tilset texture names and sizes
+    for (auto s : tilesets)
+    {
+        outFile << s.first << " " << s.second << std::endl;
+    }
+
+    //Tile size
+    outFile << tileSize << std::endl;
+
+    //Map Dimensions
+    outFile << dimensions.x << " " << dimensions.y << " " << dimensions.z << std::endl;
+
+    //Write layer
+    for (auto i = 0; i < dimensions.z; i++)
+    {
+        this->writeLayer(outFile, i);
+    }
+
+    //## Close File
+    outFile.close();
+
+    std::cout << "WRITE COMPLETE" << std::endl;
+    return 1;
+}
 
 #pragma endregion
