@@ -10,9 +10,10 @@
 #include "TextureRegistry.h"
 #include "Spritesheet.h"
 
-#include "Map.h"
+#include "Tilemap.h"
 #include "Player.h"
 #include "Item.h"
+#include "Map.h"
 
 /*
 Project: Helicopter Game, Gamestate System

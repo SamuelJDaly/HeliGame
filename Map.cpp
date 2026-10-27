@@ -51,7 +51,7 @@ Map::Map(TextureRegistry* textureRegistry, int tileSize, sf::Vector2<unsigned in
 	this->tileSize = tileSize;
 	this->dimensions = dims;
 
-	tilesets.push_back({textureName, tileSize});
+	tilesets.push_back({textureName, textureSize});
 
 	for (unsigned int i = 0; i < dims.y; i++)
 	{

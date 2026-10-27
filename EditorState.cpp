@@ -7,13 +7,12 @@
 #pragma region ACTIONS
 
 #pragma region Paint Action
-ActionPaint::ActionPaint(Map* target, std::vector<sf::Vector2<int>> positions, Tile selection)
+ActionPaint::ActionPaint(tmap::Tilemap* target, std::vector<sf::Vector3<int>> positions, tmap::Tile selection)
 {
 	isUndoable = true;
 	this->target = target;
 	this->positions = positions;
 	this->selection = selection;
-
 }
 
 ActionPaint::~ActionPaint()
@@ -24,57 +23,61 @@ int ActionPaint::execute()
 {
 	if (!target)
 	{
-		return 0;
+		return -1;
 	}
 
 	if (selection.type < 0)
 	{
-		return 0;
+		return -1;
 	}
 	
 
-	//Loop Through and replace tiles
+	//Loop Through every provided tile coordinate and modify its data accordingly
+	sf::Vector3<int> dimensions = target->getDimensions();
 	for (int i = 0; i < positions.size(); i++)
 	{
-		sf::Vector2<int> idx = positions.at(i);
+		sf::Vector3<int> idx = positions.at(i);
 		//Check for valid index
-		if (idx.x >= 0 && idx.y >= 0 && idx.x < target->getDimensions().x && idx.y < target->getDimensions().y)
+		if (idx.x >= 0 && idx.y >= 0 && idx.z >= 0 && idx.x < dimensions.x && idx.y < dimensions.y && idx.z < dimensions.z)
 		{
-			Tile* src = target->tileAtIdx(idx.x, idx.y);
-			Tile og = Tile(*src);
 
-			target->modTileSheetAt(idx.x, idx.y, selection.sheet);
-			target->modTileTypeAt(idx.x, idx.y, selection.type);
-			target->refreshTextureAt(idx.x, idx.y);
 
+			//Get the tile at the current index and store a copy as the original state
+			tmap::Tile* src = target->getTileAt(idx.x, idx.y, idx.z);
+			tmap::Tile og = tmap::Tile(*src);
+
+			//Replace the data of the current tile with the brush data
+			target->modTileAt(idx.x, idx.y, idx.z, selection);
+
+
+			//Add the original state of the current tile to the overall original state list
 			originalState.push_back(og);
 		}
 	}
 
-	return 0;
+	return 1;
 }
 int ActionPaint::undo()
 {
 	if (positions.size() != originalState.size())
 	{
-		return 0;
+		return -1;
 	}
 
+	sf::Vector3<int> dimensions = target->getDimensions();
 	for (int i = positions.size() - 1; i >= 0; i--)
 	{
-		sf::Vector2<unsigned int> idx = { (unsigned int)positions.at(i).x, (unsigned int)positions.at(i).y};
+		sf::Vector3<int> idx = {positions.at(i).x, positions.at(i).y, positions.at(i).z};
 		//Check for valid index
-		if (idx.x < target->getDimensions().x && idx.y < target->getDimensions().y)
+		if (idx.x >= 0 && idx.y >= 0 && idx.z >= 0 && idx.x < dimensions.x && idx.y < dimensions.y && idx.z < dimensions.z)
 		{
-			target->modTileSheetAt(idx.x, idx.y, originalState.at(i).sheet);
-			target->modTileTypeAt(idx.x, idx.y, originalState.at(i).type);
-			target->refreshTextureAt(idx.x,idx.y);
+			target->modTileAt(idx.x,idx.y,idx.z,originalState.at(i));
 		}
 	}
 
 	originalState.clear();
 
-	return 0;
+	return 1;
 }
 #pragma endregion
 
@@ -86,7 +89,7 @@ int ActionAddTileset::execute()
 	{
 		//Then has been undone, do redo logic
 		//Swap the states
-		Map* temp = ogState;
+		tmap::Tilemap* temp = ogState;
 		ogState = target;
 		target = temp;
 		isRestored = false;
@@ -95,7 +98,7 @@ int ActionAddTileset::execute()
 	{
 		//Then has not been undone, do initial logic
 		//Store og state
-		ogState = new Map(*target);
+		ogState = new tmap::Tilemap(*target);
 
 		//Modify the current state
 		target->addTileset(set);
@@ -115,7 +118,7 @@ int ActionAddTileset::undo()
 	isRestored = true;
 
 	//Swap the states back
-	Map* temp = target;
+	tmap::Tilemap* temp = target;
 	target = ogState;
 	ogState = temp;
 
@@ -134,10 +137,7 @@ int ActionAddTileset::undo()
 void EditorState::init()
 {
 	//Start with empty 10x10 map
-	map = new Map(texReg, 32, {10,10}, "tileset_0", 32);
-	map->setVeiw(&mapView);
-	map->setGridDraw(true);
-	map->setGridColor(sf::Color::White);
+	map = new tmap::Tilemap(10, 10, 1, 32, texReg, "tileset_0", 32);
 
 	//Test
 	brushFill.sheet = 0;
@@ -240,10 +240,10 @@ void EditorState::drawBrush(sf::RenderWindow& win)
 	sf::Vector2<int> mousePos = sf::Mouse::getPosition(win);
 	win.setView(mapView);
 	sf::Vector2<float> mapViewMousePos = win.mapPixelToCoords(mousePos);
-	sf::Vector2<int> mapIdx = map->posToTileIdx(mapViewMousePos);
+	sf::Vector2<int> mapIdx = map->getCoords(mapViewMousePos);
 
 
-	std::vector<sf::Vector2<int>> positions = this->getBrushPositions(mapIdx);
+	std::vector<sf::Vector3<int>> coordinates = this->getBrushPositions(mapIdx);
 
 
 	if (mapIdx.x < 0 || mapIdx.y < 0)
@@ -251,24 +251,25 @@ void EditorState::drawBrush(sf::RenderWindow& win)
 		return;
 	}
 
-	for (auto i = 0; i < positions.size(); i++)
+	for (auto i = 0; i < coordinates.size(); i++)
 	{
-		if (map->containsIdx(positions.at(i)))
+		sf::Vector2<int> coord = { coordinates.at(i).x, coordinates.at(i).y };
+		if (map->containsCoord(coord))
 		{
 			sf::RectangleShape box;
 			box.setFillColor({ 255,255,255,100 });
 			box.setSize({ (float)map->getTileSize(), (float)map->getTileSize() });
 			box.setOrigin(box.getLocalBounds().getCenter());
-			box.setPosition(map->tileIdxToPos(positions.at(i)));
+			box.setPosition(map->getPos(coord));
 
 			win.draw(box);
 		}
 	}
 }
 
-std::vector<sf::Vector2<int>> EditorState::getBrushPositions(sf::Vector2<int> pos)
+std::vector<sf::Vector3<int>> EditorState::getBrushPositions(sf::Vector2<int> pos)
 {
-	std::vector<sf::Vector2<int>> res;
+	std::vector<sf::Vector3<int>> res;
 
 	sf::Vector2<int> offset = {pos.x - (int)(brushShape.front().size()/2), pos.y - (int)(brushShape.size() / 2)};
 
@@ -276,9 +277,9 @@ std::vector<sf::Vector2<int>> EditorState::getBrushPositions(sf::Vector2<int> po
 	{
 		for (auto j = 0; j < brushShape.at(i).size(); j++)
 		{
-			if (brushShape.at(i).at(j) && map->containsIdx({ offset.x + j, offset.y + i }))
+			if (brushShape.at(i).at(j) && map->containsCoord({ offset.x + j, offset.y + i }))
 			{
-				res.push_back({offset.x + j, offset.y + i});
+				res.push_back({offset.x + j, offset.y + i, currLayer});
 			}
 		}
 	}
@@ -335,10 +336,12 @@ int EditorState::createMap(unsigned int width, unsigned int height, int tilesize
 	this->clearUndoStack();
 	this->clearRedoStack();
 
-	map = new Map(texReg, tilesize, { width,height }, "tileset_0", 32);
+	map = new tmap::Tilemap(width, height,1,tilesize, texReg, "tileset_0", 32);
+
+	/*map = new Map(texReg, tilesize, { width,height }, "tileset_0", 32);
 	map->setVeiw(&mapView);
 	map->setGridDraw(true);
-	map->setGridColor(sf::Color::White);
+	map->setGridColor(sf::Color::White);*/
 
 	return 1;
 }
@@ -369,20 +372,25 @@ int EditorState::openMap()
 	auto selection = pfd::open_file("Select a file", "", {},false).result();
 	if (!selection.empty())
 	{
-		Map* newMap = new Map(texReg);
+		tmap::Tilemap* newMap = new tmap::Tilemap(texReg);
 		//check for succesful load
-		if (newMap->loadFromFile(selection.front()))
+		if (newMap->loadFromFile(selection.front()) == 1)
 		{
+			
 			//Then swap maps
 			delete map;
+			
 			map = newMap;
 			filepath = selection.front();
+			
 			this->clearRedoStack();
 			this->clearUndoStack();
+			std::cout << "Map open success" << std::endl;
 		}
 		else
 		{
 			delete newMap;
+			std::cout << "Map open fail" << std::endl;
 		}
 	}
 		
@@ -450,7 +458,7 @@ void EditorState::ShowMenuBar_Options()
 	//if (ImGui::MenuItem("Show Grid", "CTRL+G")) {}
 	ImGui::Text("Grid Options");
 	ImGui::Separator();
-	if (ImGui::Checkbox("Show Grid", &showMapGrid)) { map->setGridDraw(showMapGrid); }
+	if (ImGui::Checkbox("Show Grid", &showMapGrid)) { map->setDoDrawGrid(showMapGrid); }
 
 	if (ImGui::BeginMenu("Colors"))
 	{
@@ -909,13 +917,17 @@ void EditorState::update(float dt)
 	if (isPainting)
 	{
 		lastIdx = currIdx;
-		currIdx = map->posToTileIdx(mapViewMousePos);
-		if (currIdx != lastIdx && map->containsIdx(currIdx))
+		currIdx = map->getCoords(mapViewMousePos);
+		if (currIdx != lastIdx && map->containsCoord(currIdx))
 		{
-			for (auto p : this->getBrushPositions(currIdx)) { 
-				paintedTiles.push_back(p); 
-				originalStates.push_back(Tile(*map->tileAtIdx((size_t)p.x, (size_t)p.y)));
+			for (sf::Vector3<int> p: this->getBrushPositions(currIdx))
+			{
+				tmap::Tile t = *map->getTileAt(p.x, p.y, currLayer);
+				paintedTiles.push_back(p);
+				originalStates.push_back(t);
 			}
+
+			//Make a temporary paint action that updates the display, but is not added to the undo stack
 			ActionPaint singlePaintAction = ActionPaint(map, this->getBrushPositions(currIdx), brushFill);
 			singlePaintAction.execute();
 		}
@@ -995,11 +1007,11 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 		if (mouseButton->button == sf::Mouse::Button::Middle)
 		{
 			//Dropper
-			auto idx = map->posToTileIdx(mapViewMousePos);
-			if (map->containsIdx(idx))
+			auto idx = map->getCoords(mapViewMousePos);
+			if (map->containsCoord(idx))
 			{
 				//std::cout << "Brush Sheet Before: " << brushFill.sheet << " | Brush Type Before: " << brushFill.type << std::endl;
-				brushFill = Tile(*map->tileAtIdx((size_t)(idx.x), (size_t)(idx.y)));
+				brushFill = tmap::Tile(*map->getTileAt(idx.x, idx.y, currLayer));
 				//std::cout << "Brush Sheet After: " << brushFill.sheet << " | Brush Type After: " << brushFill.type << std::endl;
 			}
 
@@ -1054,7 +1066,7 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 void EditorState::draw(sf::RenderWindow& win)
 {
 	win.setView(mapView);
-	map->Draw(win);
+	map->draw(win);
 	if (isPaintToolSelected) { this->drawBrush(win); }
 
 

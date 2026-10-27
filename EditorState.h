@@ -8,12 +8,17 @@
 #include "portable-file-dialogs.h"
 
 #include "Gamestate.h"
-#include "Map.h"
+#include "Tilemap.h"
 
 /*
-TODO:
+NOTES:
 	- Revist add tileset action to make sure it is robust against commands executed in the wrong order (has memory leak right now I think)
 	  Also make sure that the state swap logic makes sense.
+
+	- In the absence of an alternative plan, I will keep the current tileset addition action logic for now. That said, duplicating the map for every single
+	  tileset addition action is insane, and there has to be a less wasteful way to acomplish the same end. Revisit this later.
+
+	- Make sure to update the currIdx and lastIdx in the paiting logic to reset when changing which map is being edited (ie new map and open map)
 
 */
 
@@ -39,38 +44,38 @@ class ActionPaint : public EditorAction
 {
 private:
 	//## Data
-	Map* target;
-	std::vector<sf::Vector2<int>> positions;
-	std::vector<Tile> originalState;
-	Tile selection;
+	tmap::Tilemap* target;
+	std::vector<sf::Vector3<int>> positions;
+	std::vector<tmap::Tile> originalState;
+	tmap::Tile selection;
 
 	//## Util
 
 
 public:
 	//## Constructor and Destructor
-	ActionPaint(Map* target, std::vector<sf::Vector2<int>> positions, Tile selection);
+	ActionPaint(tmap::Tilemap* target, std::vector<sf::Vector3<int>> positions, tmap::Tile selection);
 	~ActionPaint();
 
 	//## Primary Functions
 	int execute();
 	int undo();
-	inline void setOriginalState(std::vector<Tile> originalState) { this->originalState = originalState; }
+	inline void setOriginalState(std::vector<tmap::Tile> originalState) { this->originalState = originalState; }
 };
 
 //class ActionRemoveTileset : public EditorAction
 //{
 //private:
 //	//## Data
-//	Map* target;
-//	Map* ogState;
+//	tmap::Tilemap* target;
+//	tmap::Tilemap* ogState;
 //
 //	//## Util
 //
 //
 //public:
 //	//## Constructor and Destructor
-//	ActionRemoveTileset(Map* target, int idx);
+//	ActionRemoveTileset(tmap::Tilemap* target, int idx);
 //	~ActionRemoveTileset();
 //
 //	//## Primary Functions
@@ -82,8 +87,8 @@ class ActionAddTileset : public EditorAction
 {
 private:
 	//## Data
-	Map* target;
-	Map* ogState = nullptr;
+	tmap::Tilemap* target;
+	tmap::Tilemap* ogState = nullptr;
 	bool isRestored = false;
 
 	std::pair<std::string, int> set = {"",-1};
@@ -93,7 +98,7 @@ private:
 
 public:
 	//## Constructor and Destructor
-	inline ActionAddTileset(Map* target, std::pair<std::string, int> set) { this->target = target; this->set = set; }
+	inline ActionAddTileset(tmap::Tilemap* target, std::pair<std::string, int> set) { this->target = target; this->set = set; }
 	inline ~ActionAddTileset() { if (ogState) { delete ogState; } }
 
 	//## Primary Functions
@@ -137,7 +142,7 @@ private:
 	int newMapHeight = 10;
 	int newMapTilesize = 32;
 
-	Map* map;
+	tmap::Tilemap* map;
 
 	//Misc
 	bool doShowDemoGui = false;
@@ -148,13 +153,14 @@ private:
 
 	//Tile Editor
 	bool doShowTileEditor = false;
-	Tile brushFill;
+	tmap::Tile brushFill;
 	std::vector<std::vector<bool>> brushShape = { {true} };
-	std::vector<sf::Vector2<int>> paintedTiles;
-	std::vector<Tile> originalStates;
+	std::vector<sf::Vector3<int>> paintedTiles;
+	std::vector<tmap::Tile> originalStates;
 	bool isPaintToolSelected = false;
 	bool isPainting = false;
 	bool isBrushDrawn = false;
+	int currLayer = 0;
 	
 	int tilsetSelIdx = 0;
 	int tileSelIdx = -1;
@@ -181,7 +187,7 @@ private:
 	void zoomCamera(float zoom);
 
 	void drawBrush(sf::RenderWindow &win);
-	std::vector<sf::Vector2<int>> getBrushPositions(sf::Vector2<int> pos);
+	std::vector<sf::Vector3<int>> getBrushPositions(sf::Vector2<int> pos);
 	void setBrushCircle(float radius);
 	void setBrushSquare(int width, int height);
 

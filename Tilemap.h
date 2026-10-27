@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
 #include <utility>
 #include <SFML/Graphics.hpp>
 
@@ -26,16 +27,13 @@ namespace tmap
 
 struct Tile
 {
-	int type = -1;
-	int sheet = -1;
+	int type = 0;
+	int sheet = 0;
 	bool isSolid = false;
 
 	sf::Vector2i coords = { -1,-1 };
 
 	Spritesheet sprite;
-
-	Tile(Tile* cpy) { type = cpy->type; sheet = cpy->sheet; isSolid = cpy->isSolid; sprite = Spritesheet(cpy->sprite); coords = cpy->coords; } //Need to make sure this is kosher...
-	Tile() {};
 };
 
 
@@ -44,6 +42,7 @@ class TileLayer
 private:
 	//## Data
 	std::vector<std::vector<Tile*>> tiles;
+	std::unordered_map<std::string, Tile*> dirtyTiles;
 	sf::Vector2<float> offset = { 0.f,0.f };
 	int tileSize = 32; //Should this be stored here? its dupliation of data...
 
@@ -53,18 +52,19 @@ private:
 
 public:
 	//## Constructor and Destructor
+	TileLayer(int width, int height, int tilesize, sf::Texture* texture, int frameSize);
 	TileLayer(int width, int height, int tilesize);
 	~TileLayer();
 
 	//## Primary Functions
-	Tile getTileAt(int x, int y);
+	Tile* getTileAt(int x, int y);
 	void setTileAt(int x, int y, const Tile& data);
-	void setTypeAt(int x, int y, int type, TextureRegistry &texReg, std::vector<std::pair<std::string, int>> tilesets, int tilesize);
-	void setSheetAt(int x, int y, int sheet, TextureRegistry& texReg, std::vector<std::pair<std::string, int>> tilesets, int tilesize);
+	void setTypeAt(int x, int y, int type);
+	void setSheetAt(int x, int y, int sheet);
 	void setSolidAt(int x, int y, int state);
-	void setTileDataAt(int x, int y, int type, int sheet, int isSolid, TextureRegistry& texReg, std::vector<std::pair<std::string, int>> tilesets, int tilesize);
+	void setTileDataAt(int x, int y, int type, int sheet, int isSolid);
 	void replaceTileAt(int x, int y, Tile* tile);
-	
+	void refreshTiles(TextureRegistry& texReg, std::vector<std::pair<std::string, int>> tilesets, int tilesize);
 
 	std::optional<sf::Rect<float>> intersectionAt(int x, int y, sf::FloatRect rect);
 	bool containsAt(int x, int y, sf::Vector2<float> pos);
@@ -81,6 +81,7 @@ class Tilemap
 {
 private:
 	//## Data
+	//General
 	sf::Vector2<float> offset;
 	std::vector<TileLayer*> layers;
 	sf::Vector3<int> dimensions = {0, 0, 0};
@@ -88,23 +89,50 @@ private:
 	std::vector<std::pair<std::string, int>> tilesets;
 	int tileSize = 32;
 
+	//Grid
+	bool doDrawGrid = true;
+	sf::Color gridColor = sf::Color::Green;
+	std::vector<sf::Vertex> grid;
+
 	//## Util
 	void clearLayers();
 	int readLayer(std::ifstream &inFile);
 	int writeLayer(std::ofstream &outFile, int layer);
+	bool validIdx(int x, int y, int z);
+	void generateGrid();
 
 public:
 	//## Constructor and Destructor
-	Tilemap(int width, int height, int layers, int tileSize, TextureRegistry* textureRegistry);
+	Tilemap(int width, int height, int layers, int tileSize, TextureRegistry* textureRegistry, std::string texName, int texSize);
+	Tilemap(TextureRegistry* textureRegistry);
 	~Tilemap();
 
 	//## Primary Functions
 	int loadFromFile(std::string filename);
 	int writeToFile(std::string filename);
 
+	void modTileAt(int x, int y, int z, Tile data);
+	Tile* getTileAt(int x, int y, int z); //would a value rather than a reference suffice here?
+
+	sf::Vector2<int> getCoords(sf::Vector2<float> pos);
+	bool containsCoord(sf::Vector2<int> coord);
+	sf::Vector2<float> getPos(sf::Vector2<int> coord);
+	bool containsPos(sf::Vector2<float> pos);
+
+	void printTile(int x, int y, int z);
+
 	void poll(sf::RenderWindow &win, std::optional<sf::Event> event);
 	void update(float dt);
 	void draw(sf::RenderWindow& win);
+
+	inline sf::Vector3<int> getDimensions() { return dimensions; }
+	inline int getTileSize() { return tileSize; }
+
+	inline void addTileset(std::pair<std::string, int> tileset) { tilesets.push_back(tileset); }
+	inline std::vector<std::pair<std::string, int>> getTilesets() { return tilesets; }
+
+	inline void setDoDrawGrid(bool state) { doDrawGrid = state; }
+	inline void setGridColor(sf::Color col) { gridColor = col; this->generateGrid(); }
 };
 
 
