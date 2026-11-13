@@ -42,6 +42,14 @@ private:
 	sf::Texture defaultTexture;
 	std::string textureManifestPath = "resource/tex/manifest.txt";
 
+	//Debug info
+	bool doShowDebugInfo = true;
+	sf::Font fnt;
+	sf::Text fpsText = sf::Text(fnt);
+	int fps = 0;
+	float frameTimer = 0.f;
+	int frameCount = 0;
+
 	float deltaTime = 0;
 
 	Gamestate* currState;

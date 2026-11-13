@@ -12,13 +12,19 @@
 
 /*
 NOTES:
-	- Revist add tileset action to make sure it is robust against commands executed in the wrong order (has memory leak right now I think)
+	- Check: Revist add tileset action to make sure it is robust against commands executed in the wrong order (has memory leak right now I think)
 	  Also make sure that the state swap logic makes sense.
 
-	- In the absence of an alternative plan, I will keep the current tileset addition action logic for now. That said, duplicating the map for every single
+	- Note: In the absence of an alternative plan, I will keep the current tileset addition action logic for now. That said, duplicating the map for every single
 	  tileset addition action is insane, and there has to be a less wasteful way to acomplish the same end. Revisit this later.
 
 	- Make sure to update the currIdx and lastIdx in the paiting logic to reset when changing which map is being edited (ie new map and open map)
+
+	- Feature: Easier navigation of tile pallete while painting. (Ie alternative to clicking, maybe arrow keys)
+
+	- Bug: Double Click in new map dialog causes program to freeze
+
+	- Bug: Cant add duplicate texture to registry under a different name
 
 */
 
@@ -107,6 +113,27 @@ public:
 };
 
 
+class ActionResizeMap : public EditorAction
+{
+private:
+	//## Data
+	tmap::Tilemap* target = nullptr;
+	tmap::Tilemap* ogState = nullptr;
+	sf::Vector3<int> newSize = {0,0,0};
+
+
+	//## Util
+
+
+public:
+	//## Constructor and Destructor
+	ActionResizeMap(tmap::Tilemap* initTarget, sf::Vector3<int> initNewSize);
+	~ActionResizeMap();
+
+	//## Primary Functions
+	int execute();
+	int undo();
+};
 
 //##################################################################################################################
 //		EDITOR STATE
@@ -140,6 +167,7 @@ private:
 	char newMapName[512] = "";
 	int newMapWidth = 10;
 	int newMapHeight = 10;
+	int newMapLayers = 1;
 	int newMapTilesize = 32;
 
 	tmap::Tilemap* map;
@@ -161,12 +189,14 @@ private:
 	bool isPainting = false;
 	bool isBrushDrawn = false;
 	int currLayer = 0;
+	int currSheetSel = 0;
 	
 	int tilsetSelIdx = 0;
 	int tileSelIdx = -1;
 	sf::Font font;
 	sf::Text textBrushSheet = sf::Text(font);
 	sf::Text textBrushType = sf::Text(font);
+	sf::Text textLayer = sf::Text(font);
 
 	ImVec2 tsAddPos = ImVec2(0,0);
 	bool doShowTilesetAdd = false;
@@ -191,7 +221,7 @@ private:
 	void setBrushCircle(float radius);
 	void setBrushSquare(int width, int height);
 
-	int createMap(unsigned int width, unsigned int height, int tileSize);
+	int createMap(int width, int height, int layers, int tileSize);
 	int saveMap();
 	int openMap();
 	void exitEditor();

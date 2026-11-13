@@ -63,6 +63,21 @@ tmap::TileLayer::TileLayer(int width, int height, int tilesize)
     }
 }
 
+tmap::TileLayer::TileLayer(TileLayer& src)
+{
+    this->offset = src.offset;
+    this->tileSize = src.tileSize;
+    
+    for (int i = 0; i < src.tiles.size(); i++)
+    {
+        tiles.push_back(std::vector<tmap::Tile*>());
+        for (int j = 0; j < src.tiles.at(i).size(); j++)
+        {
+            tiles.at(i).push_back(new tmap::Tile(*src.tiles.at(i).at(j)));
+        }
+    }
+}
+
 tmap::TileLayer::~TileLayer()
 {
     //Deallocate tiles
@@ -167,6 +182,12 @@ void tmap::TileLayer::refreshTiles(TextureRegistry& texReg, std::vector<std::pai
     for (auto it = dirtyTiles.begin(); it != dirtyTiles.end(); it++)
     {
         Tile* t = (*it).second;
+
+        if (t->sheet == -1 || t->type == -1)
+        {
+            continue;
+        }
+
         unsigned int frameSize = (unsigned int)tilesets.at(t->sheet).second;
         t->sprite.setTexture(texReg.lookup(tilesets.at(t->sheet).first));
         t->sprite.setFrameSize(frameSize, frameSize);
@@ -180,6 +201,14 @@ void tmap::TileLayer::refreshTiles(TextureRegistry& texReg, std::vector<std::pai
 
     //Clear List
     dirtyTiles.clear();
+}
+
+sf::Vector2<float> tmap::Tilemap::getSize()
+{
+    float x = dimensions.x * tileSize;
+    float y = dimensions.y * tileSize;
+
+    return { x,y };
 }
 
 std::optional<sf::Rect<float>> tmap::TileLayer::intersectionAt(int x, int y, sf::FloatRect rect)
@@ -229,13 +258,52 @@ void tmap::TileLayer::move(sf::Vector2<float> amt)
     }
 }
 
+void tmap::TileLayer::resize(int x, int y)
+{
+    std::vector<std::vector<tmap::Tile*>> newTiles;
+
+    //Expand
+    for (int i = 0; i < y; i++)
+    {
+        if (i < tiles.size())
+        {
+            //Existing row
+            newTiles.push_back(tiles.at(i));
+            for (int j = tiles.at(i).size()-1; j < x; j++) { newTiles.at(i).push_back(new tmap::Tile()); }
+        }
+        else
+        {
+            //New row
+            newTiles.push_back(std::vector<tmap::Tile*>());
+            for (int j = 0; j < x; j++) { newTiles.back().push_back(new tmap::Tile()); }
+        }
+    }
+
+
+    //Shrink
+    int diffX = tiles.back().size() - x;
+    int diffY = tiles.size() - y;
+    for (int i = 0; i < diffY; i++)
+    {
+        for (int j = 0; j < diffX; j++)
+        {
+
+        }
+    }
+
+    tiles = newTiles;
+}
+
 void tmap::TileLayer::draw(sf::RenderWindow& win)
 {
     for (auto i = 0; i < tiles.size(); i++)
     {
         for (auto j = 0; j < tiles.at(i).size(); j++)
         {
-            tiles.at(i).at(j)->sprite.draw(win);
+            if (tiles.at(i).at(j)->sheet >= 0 && tiles.at(i).at(j)->type >= 0)
+            {
+                tiles.at(i).at(j)->sprite.draw(win);
+            }
         }
     }
 }
@@ -374,11 +442,31 @@ tmap::Tilemap::Tilemap(int width, int height, int layers, int tileSize, TextureR
         TileLayer* l = new TileLayer(width, height, tileSize, initTexture, texSize);
         this->layers.push_back(l);
     }
+
+    this->generateGrid();
 }
 
 tmap::Tilemap::Tilemap(TextureRegistry* textureRegistry)
 {
     texReg = textureRegistry;
+}
+
+tmap::Tilemap::Tilemap(Tilemap& src)
+{
+    //Copy Attributes
+    this->dimensions = src.dimensions;
+    this->doDrawGrid = src.doDrawGrid;
+    this->gridColor = src.gridColor;
+    this->offset = src.offset;
+    this->texReg = src.texReg;
+    this->tilesets = src.tilesets;
+    this->tileSize = src.tileSize;
+    
+    //Copy layer data
+    for (int i = 0; i < src.layers.size(); i++)
+    {
+        layers.push_back(new tmap::TileLayer(*src.layers.at(i)));
+    }
 }
 
 tmap::Tilemap::~Tilemap()
@@ -451,9 +539,11 @@ int tmap::Tilemap::loadFromFile(std::string filename)
     inFile.close();
 
     std::cout << "LOAD COMPLETE" << std::endl;
-    return 1;
 
-    
+    //## Set Grid up
+    this->generateGrid();
+
+    return 1;
 }
 
 int tmap::Tilemap::writeToFile(std::string filename)
@@ -499,6 +589,38 @@ int tmap::Tilemap::writeToFile(std::string filename)
 
     std::cout << "WRITE COMPLETE" << std::endl;
     return 1;
+}
+
+void tmap::Tilemap::resize(int x, int y, int z)
+{
+    std::vector<tmap::TileLayer*> newLayers;
+
+    //Expand
+    for (int i = 0; i < z; i++)
+    {
+        if (i < dimensions.z)
+        {
+            //Existing Layer
+            newLayers.push_back(layers.at(i));
+            newLayers.at(i)->resize(x,y);
+        }
+        else
+        {
+            //New Layer
+            newLayers.push_back(new tmap::TileLayer(x, y, tileSize));
+        }
+    }
+
+    //Shronk
+    int diff = (int)layers.size() - (int)newLayers.size(); // -1 1
+    for (int i = 0; i < diff; i++)
+    {
+        //While layers is bigger than new layers, shrink it
+        delete layers.back();
+        layers.pop_back();
+    }
+    dimensions = {x,y,z};
+    layers = newLayers;
 }
 
 void tmap::Tilemap::modTileAt(int x, int y, int z, Tile data)
@@ -606,6 +728,31 @@ void tmap::Tilemap::draw(sf::RenderWindow& win)
     for (auto l : layers)
     {
         l->draw(win);
+    }
+
+    //Draw Grid
+    if (doDrawGrid)
+    {
+        for (auto i = 0; i < grid.size(); i += 2)
+        {
+            sf::Vertex line[2] = { grid.at(i),grid.at(i + 1) };
+            win.draw(line, 2, sf::PrimitiveType::Lines);
+        }
+    }
+}
+
+void tmap::Tilemap::draw(sf::RenderWindow& win, int topLayer)
+{
+    //Validate layer count
+    if (topLayer >= layers.size())
+    {
+        topLayer = (int)layers.size()-1;
+    }
+
+    //Draw Tiles
+    for (int i = 0; i <= topLayer; i++)
+    {
+        layers.at(i)->draw(win);
     }
 
     //Draw Grid

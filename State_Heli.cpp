@@ -58,12 +58,10 @@ void State_Heli::init() {
 	view_map.setViewport({ {0.f,0.f},{1.f,1.f} });
 	view_map.setSize({ (float)win->getSize().x, (float)win->getSize().y });
 
-	map = new Map(texReg);
-	if (!map->loadFromFile("resource/crap.txt"))
-	{
-		map->loadFromFile("resource/map_multi.txt");
-	}
-	map->setGridDraw(false);
+
+
+	map = new tmap::Tilemap(texReg);
+	map->loadFromFile("resource/map_proto.txt");
 
 	//## Player
 	player = new Helicopter();
@@ -158,7 +156,7 @@ void State_Heli::draw(sf::RenderWindow& win) {
 
 
 	win.setView(view_map);
-	map->Draw(win);
+	map->draw(win);
 	for (auto e : enemies) {
 		e->draw(win);
 	}

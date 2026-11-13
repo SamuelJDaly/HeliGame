@@ -27,12 +27,10 @@ namespace tmap
 
 struct Tile
 {
-	int type = 0;
-	int sheet = 0;
+	int type = -1;
+	int sheet = -1;
 	bool isSolid = false;
-
 	sf::Vector2i coords = { -1,-1 };
-
 	Spritesheet sprite;
 };
 
@@ -54,6 +52,7 @@ public:
 	//## Constructor and Destructor
 	TileLayer(int width, int height, int tilesize, sf::Texture* texture, int frameSize);
 	TileLayer(int width, int height, int tilesize);
+	TileLayer(TileLayer& src); //Deep copy
 	~TileLayer();
 
 	//## Primary Functions
@@ -72,6 +71,8 @@ public:
 	void setOffset(sf::Vector2<float> newOffset);
 	inline sf::Vector2<float> getOffset() { return offset; }
 	void move(sf::Vector2<float> amt);
+
+	void resize(int x, int y);
 
 	void draw(sf::RenderWindow &win);
 };
@@ -105,11 +106,14 @@ public:
 	//## Constructor and Destructor
 	Tilemap(int width, int height, int layers, int tileSize, TextureRegistry* textureRegistry, std::string texName, int texSize);
 	Tilemap(TextureRegistry* textureRegistry);
+	Tilemap(Tilemap& src);//Deep copy
 	~Tilemap();
 
 	//## Primary Functions
 	int loadFromFile(std::string filename);
 	int writeToFile(std::string filename);
+
+	void resize(int x, int y, int z);
 
 	void modTileAt(int x, int y, int z, Tile data);
 	Tile* getTileAt(int x, int y, int z); //would a value rather than a reference suffice here?
@@ -124,9 +128,11 @@ public:
 	void poll(sf::RenderWindow &win, std::optional<sf::Event> event);
 	void update(float dt);
 	void draw(sf::RenderWindow& win);
+	void draw(sf::RenderWindow& win, int topLayer);
 
 	inline sf::Vector3<int> getDimensions() { return dimensions; }
 	inline int getTileSize() { return tileSize; }
+	sf::Vector2<float> getSize();
 
 	inline void addTileset(std::pair<std::string, int> tileset) { tilesets.push_back(tileset); }
 	inline std::vector<std::pair<std::string, int>> getTilesets() { return tilesets; }

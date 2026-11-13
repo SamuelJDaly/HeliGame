@@ -13,11 +13,22 @@ ActionPaint::ActionPaint(tmap::Tilemap* target, std::vector<sf::Vector3<int>> po
 	this->target = target;
 	this->positions = positions;
 	this->selection = selection;
+
+	/*std::cout << "CREATING PAINT ACTION:" << std::endl;
+	std::cout << "\tFill: " << std::endl;
+	std::cout << "\t\tSheet: " << selection.sheet << std::endl;
+	std::cout << "\t\tType: " << selection.type << std::endl;
+	std::cout << "\tPositions:" << std::endl;
+	for (auto p : positions)
+	{
+		std::cout << "\t\t" << p.x << ", " << p.y << std::endl;
+	}*/
 }
 
 ActionPaint::~ActionPaint()
 {
 }
+
 
 int ActionPaint::execute()
 {
@@ -25,12 +36,6 @@ int ActionPaint::execute()
 	{
 		return -1;
 	}
-
-	if (selection.type < 0)
-	{
-		return -1;
-	}
-	
 
 	//Loop Through every provided tile coordinate and modify its data accordingly
 	sf::Vector3<int> dimensions = target->getDimensions();
@@ -127,6 +132,51 @@ int ActionAddTileset::undo()
 
 #pragma endregion
 
+
+#pragma region AddLayerAction
+
+ActionResizeMap::ActionResizeMap(tmap::Tilemap* initTarget, sf::Vector3<int> initNewSize)
+{
+	this->target = initTarget;
+	this->newSize = initNewSize;
+}
+
+ActionResizeMap::~ActionResizeMap()
+{
+}
+
+
+int ActionResizeMap::execute()
+{
+	//Validate new dimensions
+	if (newSize.x < 0 || newSize.y < 0 || newSize.z < 0)
+	{
+		return -1;
+	}
+	
+	ogState = new tmap::Tilemap(*target);
+
+	target->resize(newSize.x, newSize.y, newSize.z); //Resize the map
+
+	return 1;
+}
+
+int ActionResizeMap::undo()
+{
+	//Validate og state
+	if (!ogState)
+	{
+		return -1;
+	}
+
+	delete target;
+	target = ogState;
+
+	return 1;
+}
+
+#pragma endregion
+
 #pragma endregion
 
 
@@ -161,6 +211,12 @@ void EditorState::init()
 	textBrushType.setCharacterSize(12);
 	textBrushType.setFillColor(sf::Color::White);
 	textBrushType.setPosition({ 5.f, (float)win->getSize().y - 40 });
+
+
+	textLayer.setFont(font);
+	textLayer.setCharacterSize(12);
+	textLayer.setFillColor(sf::Color::White);
+	textLayer.setPosition({ 5.f, (float)win->getSize().y - 80 });
 
 	this->setBrushCircle(2.f);
 	
@@ -271,6 +327,7 @@ std::vector<sf::Vector3<int>> EditorState::getBrushPositions(sf::Vector2<int> po
 {
 	std::vector<sf::Vector3<int>> res;
 
+	//Find the center of the brush
 	sf::Vector2<int> offset = {pos.x - (int)(brushShape.front().size()/2), pos.y - (int)(brushShape.size() / 2)};
 
 	for (auto i = 0; i < brushShape.size(); i++)
@@ -330,13 +387,16 @@ void EditorState::setBrushSquare(int width, int height)
 	}
 }
 
-int EditorState::createMap(unsigned int width, unsigned int height, int tilesize)
+int EditorState::createMap(int width, int height, int layers, int tilesize)
 {
 	delete map;
 	this->clearUndoStack();
 	this->clearRedoStack();
 
-	map = new tmap::Tilemap(width, height,1,tilesize, texReg, "tileset_0", 32);
+	map = new tmap::Tilemap(width, height,layers,tilesize, texReg, "tileset_0", 32);
+
+	tilsetSelIdx = 0;
+	tileSelIdx = 0;
 
 	/*map = new Map(texReg, tilesize, { width,height }, "tileset_0", 32);
 	map->setVeiw(&mapView);
@@ -529,6 +589,7 @@ void EditorState::showGuiNewMap(bool* pOpen)
 {
 	ImGuiWindowFlags windowFlags = 0;
 
+	std::cout << "New Map" << std::endl;
 
 	ImGui::SetWindowPos(ImVec2(0, 30));
 	ImGui::SetWindowSize(ImVec2(300, 400.f));
@@ -547,6 +608,9 @@ void EditorState::showGuiNewMap(bool* pOpen)
 	ImGui::Text("Height:");
 	ImGui::SameLine();
 	ImGui::InputInt("###nmc", &newMapHeight);
+	ImGui::Text("Layers:");
+	ImGui::SameLine();
+	ImGui::InputInt("###nmd", &newMapLayers);
 
 	//Tilesize
 	ImGui::Text("Tile Size:");
@@ -558,7 +622,7 @@ void EditorState::showGuiNewMap(bool* pOpen)
 	//Buttons
 	if (ImGui::Button("Ok##nmd"))
 	{
-		this->createMap((unsigned int)newMapWidth, (unsigned int)newMapHeight, newMapTilesize);
+		this->createMap(newMapWidth, newMapHeight, newMapLayers, newMapTilesize);
 		//Set map filename NOT IMPLEMENTED
 
 		*pOpen = false;
@@ -616,6 +680,7 @@ void EditorState::showGuiTileEditor(bool* pOpen)
 			if (ImGui::Selectable(tilesets.at(i).first.c_str(), is_selected))
 			{
 				tilsetSelIdx = i;
+				currSheetSel = i;
 				brushFill.sheet = i;
 				brushFill.type = -1;
 			}
@@ -724,6 +789,7 @@ void EditorState::showGuiTileEditor(bool* pOpen)
 			{
 				tileSelIdx = flatIdx;
 				brushFill.type = flatIdx;
+				brushFill.sheet = currSheetSel;
 			}
 
 			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -912,6 +978,7 @@ void EditorState::update(float dt)
 
 	textBrushSheet.setString("Sheet: " + std::to_string(brushFill.sheet));
 	textBrushType.setString("Type: " + std::to_string(brushFill.type));
+	textLayer.setString("Layer: " + std::to_string(currLayer));
 
 	//Painting
 	if (isPainting)
@@ -920,7 +987,8 @@ void EditorState::update(float dt)
 		currIdx = map->getCoords(mapViewMousePos);
 		if (currIdx != lastIdx && map->containsCoord(currIdx))
 		{
-			for (sf::Vector3<int> p: this->getBrushPositions(currIdx))
+			std::vector<sf::Vector3<int>> brushPositions = this->getBrushPositions(currIdx);
+			for (sf::Vector3<int> p: brushPositions)
 			{
 				tmap::Tile t = *map->getTileAt(p.x, p.y, currLayer);
 				paintedTiles.push_back(p);
@@ -931,6 +999,7 @@ void EditorState::update(float dt)
 			ActionPaint singlePaintAction = ActionPaint(map, this->getBrushPositions(currIdx), brushFill);
 			singlePaintAction.execute();
 		}
+
 	}
 
 	//Tile highlight
@@ -998,6 +1067,9 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 				originalStates.clear();
 				paintedTiles.clear();
 
+				//Reset curridx
+				currIdx = { -1,-1 };
+
 				undoStack.push(totalPaintAction);
 				this->clearRedoStack();
 			}
@@ -1027,8 +1099,21 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 	//## Scroll Wheel
 	if (const auto* mouseScrolled = event->getIf<sf::Event::MouseWheelScrolled>())
 	{
-		if (canZoom && !io.WantCaptureMouse)
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl))
 		{
+			//Then do layer control
+			if (mouseScrolled->wheel == sf::Mouse::Wheel::Vertical && mouseScrolled->delta > 0) { currLayer++; }
+			if (mouseScrolled->wheel == sf::Mouse::Wheel::Vertical && mouseScrolled->delta < 0) { currLayer--; }
+
+			//Clip upper
+			if (currLayer < 0) { currLayer = 0; }
+
+			//Clip lower
+			if (currLayer >= map->getDimensions().z) { currLayer = map->getDimensions().z - 1; }
+		}
+		else if (canZoom && !io.WantCaptureMouse)
+		{
+			
 			float zoom = currZoom - (zoomSpeed * mouseScrolled->delta);
 			zoomCamera(zoom);
 		}
@@ -1066,13 +1151,14 @@ void EditorState::poll(sf::RenderWindow& win, std::optional<sf::Event> event)
 void EditorState::draw(sf::RenderWindow& win)
 {
 	win.setView(mapView);
-	map->draw(win);
+	map->draw(win, currLayer);
 	if (isPaintToolSelected) { this->drawBrush(win); }
 
 
 	win.setView(win.getDefaultView());
 	win.draw(textBrushSheet);
 	win.draw(textBrushType);
+	win.draw(textLayer);
 }
 
 

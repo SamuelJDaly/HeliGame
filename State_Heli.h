@@ -1,6 +1,6 @@
 #pragma once
 #include "Gamestate.h"
-#include "Map.h"
+#include "Tilemap.h"
 #include "Helicopter.h"
 #include "Enemy.h"
 
@@ -23,7 +23,7 @@ private:
 	float zoomStep = .1f;
 	float currZoom = 1.f;
 
-	Map* map;
+	tmap::Tilemap* map;
 
 	Helicopter* player;
 

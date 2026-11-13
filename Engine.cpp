@@ -36,9 +36,9 @@ void Engine::initTextures()
 void Engine::initState()
 {
 	//currState = new State_Game(texReg, win);
-	//currState = new State_Heli(texReg, this->win);
+	currState = new State_Heli(texReg, this->win);
 	//currState = new State_Menu(textureHandler, this->win);
-	currState = new EditorState(texReg, this->win);
+	//currState = new EditorState(texReg, this->win);
 }
 
 Engine::Engine()
@@ -50,6 +50,17 @@ Engine::Engine()
 	if (!ImGui::SFML::Init(*win)) {
 		std::cout << "Failed to initiate ImGui" << std::endl;
 	}
+
+	if (!fnt.openFromFile("resource/font/jmhtype.ttf"))
+	{
+		std::cout << "Could not load debug font" << std::endl;
+	}
+
+	fpsText.setFont(fnt);
+	fpsText.setCharacterSize(14);
+	fpsText.setString("FPS: 0");
+	fpsText.setOrigin({ fpsText.getLocalBounds().size.x / 2 ,fpsText.getLocalBounds().size.y / 2 });
+	fpsText.setPosition({ (float)(win->getSize().x / 2),50.f});
 }
 
 Engine::~Engine()
@@ -96,6 +107,18 @@ void Engine::update()
 	deltaTime = mainClock.getElapsedTime().asSeconds();
 	mainClock.restart();
 
+	//## Update fps info
+	//I suspect this is not 100% accurate, but its good enough for my purposes
+	frameTimer += deltaTime;
+	frameCount++;
+	if (frameTimer >= 1.0)
+	{
+		frameTimer = 0.f;
+		fps = frameCount;
+		frameCount = 0;
+	}
+
+	fpsText.setString("FPS: " + std::to_string(fps));
 
 	//Update Current State
 	ImGui::SFML::Update(*win, sf::seconds(deltaTime));
@@ -154,6 +177,11 @@ void Engine::draw()
 
 	win->setView(win->getDefaultView());
 	ImGui::SFML::Render(*win);
+
+	if (doShowDebugInfo)
+	{
+		win->draw(fpsText);
+	}
 
 	win->display();
 }
