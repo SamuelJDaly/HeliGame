@@ -7,7 +7,7 @@ void Projectile::playExplosion()
 	}
 
 	Animation explosionAnim = {0,6,0,30,false,false};
-	sprite.setAnimation(explosionAnim);
+	//sprite.setAnimation(explosionAnim);
 	sprite.scale({1.5f,1.5f});
 	isDying = true;
 }
@@ -31,7 +31,6 @@ void Projectile::update(float dt) {
 	}
 	sprite.update(dt);
 
-
 	//Check death state
 	if (isDying && !sprite.getAnimated()) {
 		//Then death animation has finished
@@ -41,13 +40,14 @@ void Projectile::update(float dt) {
 	float rng = maxRange;
 	rng > range ? rng = range : rng = rng;
 	if (utl::dist(origin.x,origin.y,sprite.getPosition().x,sprite.getPosition().y) >= rng) {
-		this->playExplosion();
+		this->detonate();
 	}
 }
 
 void Projectile::draw(sf::RenderWindow& win) {
 	sprite.draw(win);
 }
+
 
 void Projectile::setTexture(sf::Texture* texture)
 {
@@ -93,3 +93,54 @@ void ProjectileManager::draw(sf::RenderWindow& win) {
 	}
 }
 
+//#####################################################################################################################
+//		EXPLOSION
+//#####################################################################################################################
+
+
+Explosion::Explosion()
+{
+}
+
+Explosion::~Explosion()
+{
+}
+
+void Explosion::playExplosion()
+{
+	sprite.setAnimation(explosionAnim);
+}
+
+void Explosion::setTexture(sf::Texture* texture, unsigned int frameSize)
+{
+	if (!texture)
+	{
+		std::cout << "Could not set explosion texture!" << std::endl;
+		return;
+	}
+
+	sprite.setTexture(texture);
+	sprite.setFrameSize(frameSize, frameSize);
+	sprite.setFrame(0);
+	sprite.setOrigin(sprite.getLocalBounds().getCenter());
+}
+
+void Explosion::setAnimation(Animation anim)
+{
+	explosionAnim = anim;
+}
+
+void Explosion::setPos(sf::Vector2<float> pos)
+{
+	sprite.setPosition(pos);
+}
+
+void Explosion::update(float dt)
+{
+	sprite.update(dt);
+}
+
+void Explosion::draw(sf::RenderWindow& win)
+{
+	sprite.draw(win);
+}

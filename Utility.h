@@ -17,7 +17,7 @@ DESCRIPTION:
 */
 
 #define PI 3.1415926535f
-#define E 2.718281828f
+#define Ee 2.718281828f
 
 namespace utl {
 	//String manipulation
@@ -86,6 +86,17 @@ namespace utl {
 		r = rand() % range + min;
 
 		return r;
+	}
+
+
+	//Project point along line
+	inline std::pair<float, float> projectPointLn(float x1, float y1, float x2, float y2, float factor)
+	{
+		//Basically gets a vector from two points and multiplies by a given factor
+		float x = (x2-x1) * factor;
+		float y = (y2-y1) * factor;
+
+		return {x1+x,y1+y};
 	}
 
 	//############# A STAR PATHFINDING

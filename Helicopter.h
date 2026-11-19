@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
-#include "SFML/Graphics.hpp"
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include "Spritesheet.h"
 #include "Projectile.h"
 #include "Utility.h"
@@ -20,14 +21,15 @@ private:
 	int kills = 0;
 
 	//## Controller
-	sf::Vector2<float> vel = {0.f,0.f};
+	sf::Vector2<float> vel = {0.f,0.f}; // px/s
 	sf::Vector2<float> mom = {0.f,0.f};
-	sf::Vector2<float> maxMom = { 10000.f,10000.f };
+	float strafeDelta = 200.f;
+	float maxMom = 150.f;
 	float drag = 0.999f;
 	float mass = 100.f;
-	float delta = 60.f;
+	float delta = 120.f;
 
-	ProjectileManager projectileMgr;
+	ProjectileManager* projectileMgr;
 
 	//Weapons
 	int weaponSel = 0;
@@ -35,10 +37,11 @@ private:
 
 	sf::Texture* rocketTexture;
 	sf::Vector2f rocketSize = { 16,16 };
-	int rocketSpreadPercent = 10; //Find a better way to handle this that allows for finer control (ie floats)
+	int rocketSpreadPercent = 8;
 	float rocketSpeed = 500.f;
 	float rocketMaxRange = 500.f;
 	int rocketDmg = 10;
+	float rocketAoe = 45.f;
 	bool rocketSide = 0;
 	int rocketClipSize = 8;
 	int rocketClipCurr = 8;
@@ -52,9 +55,10 @@ private:
 
 	sf::Texture* bulletTexture;
 	sf::Vector2f bulletSize = { 16,16 };
-	int cannonSpreadPercent = 5; //Find a better way to handle this that allows for finer control (ie floats)
+	int cannonSpreadPercent = 5;
 	float cannonSpeed = 500.f;
 	float cannonMaxRange = 700.f;
+	float cannonAoe = 1.f;
 	int cannonDmg = 1;
 	float cannonFireTimer = 0.f;
 	float cannonFireInterval = 0.05f;
@@ -97,6 +101,8 @@ private:
 	void updateFireControl(float dt, sf::Vector2<float> mapViewMousePos);
 	void updateRocketFireControl(float dt, sf::Vector2<float> mapViewMousePos);
 	void updateCannonFireControl(float dt, sf::Vector2<float> mapViewMousePos);
+
+	void playRocketSound();
 	
 
 public:
@@ -115,15 +121,15 @@ public:
 	inline sf::Vector2<float> getPos() { return sprite.getPosition(); }
 	inline sf::Vector2<float> getLastPos() { return lastPos; }
 	inline void setAnimation(Animation anim) { sprite.setAnimation(anim); }
-	inline void setMapView(sf::View* newView) { map_view = newView; projectileMgr.setView(*newView); }
+	inline void setMapView(sf::View* newView) { map_view = newView;}
 	inline void setRocketTexture(sf::Texture* tex) { rocketTexture = tex; }
 	inline void setBulletTexture (sf::Texture* tex) { bulletTexture = tex; }
 	inline sf::Vector2<float> getLastOffset() { return lastOffset; }
 
 	inline sf::Rect<float> getGlobalBounds() { return sprite.getGlobalBounds(); }
 
-	inline ProjectileManager* getProjectileMgr() { return &projectileMgr; }
-
+	inline void setProjectileMgr(ProjectileManager* mgr) { projectileMgr = mgr; }
+	
 	inline void addKill(int amt = 1) { kills += amt; }
 
 };

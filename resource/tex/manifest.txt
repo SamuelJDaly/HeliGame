@@ -22,3 +22,4 @@ cursor_brush resource/tex/cursor_brush.png
 squareIcon resource/tex/squareIcon.png
 ts_rando C:\Users\Sam\source\repos\UtilAIPractice\resource\tex\owlishmedia_pixel_tiles.png
 rocket2 resource/tex/rocket_2.png
+explosion_0 resource/tex/explosion_0.png

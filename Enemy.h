@@ -50,6 +50,7 @@ public:
 
 	void setTexture(sf::Texture* texture, bool resetHibox = true);
 	void setPosition(sf::Vector2<float> pos);
+	inline sf::Vector2<float> getPos() { return sprite.getPosition(); }
 
 	inline int getID() { return id; }
 

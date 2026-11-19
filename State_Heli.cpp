@@ -63,6 +63,9 @@ void State_Heli::init() {
 	map = new tmap::Tilemap(texReg);
 	map->loadFromFile("resource/map_proto.txt");
 
+	//## Projectile Manager
+	projectileMgr.setView(view_map);
+
 	//## Player
 	player = new Helicopter();
 	player->setTexture(texReg->lookup("heli_green"));
@@ -71,6 +74,7 @@ void State_Heli::init() {
 	player->setMapView(&view_map);
 	player->setRocketTexture(texReg->lookup("rocket2"));
 	player->setBulletTexture(texReg->lookup("bullet"));
+	player->setProjectileMgr(&projectileMgr);
 
 	Animation heliAnim{0,7,0,60,false,true,-1,1};
 	player->setAnimation(heliAnim);
@@ -108,7 +112,7 @@ void State_Heli::spawnRandomEnemies(int amt)
 void State_Heli::updateCollision(float dt)
 {
 	//Naive method for now
-	for (auto p : player->getProjectileMgr()->getProjectiles()) {
+	for (auto p : projectileMgr.getProjectiles()) {
 		if (p->getTeam() != 0 || p->getDying()) {
 			//only consider player projectiles that are not already exploding
 			continue;
@@ -117,10 +121,70 @@ void State_Heli::updateCollision(float dt)
 			std::optional<sf::FloatRect> intersection = e->getHitbox().findIntersection(p->getGlobalBounds());
 			if (intersection.has_value()) {
 				p->detonate();
-				e->modCurrHP(-1*p->getDamage());
-
-				std::cout << "Enemy: " << e->getID() << " just took " << p->getDamage() << " damage: " << e->getCurrHp() << std::endl;
+				//e->modCurrHP(-1*p->getDamage());
+				std::cout << "DIRECT HIT" << std::endl;
 			}
+		}
+	}
+}
+
+void State_Heli::updateProjectiles(float dt)
+{
+	projectileMgr.update(dt);
+	for (auto p : projectileMgr.getProjectiles())
+	{
+		if (p->getDoesExplode() && p->getWantsToExplode() && !p->getHasExploded())
+		{
+			//Then make an explosion
+			Explosion* exp = new Explosion();
+			exp->setTexture(texReg->lookup("explosion_0"));
+			exp->setRadius(p->getAoeRadius());
+			exp->setSize({ p->getAoeRadius() ,p->getAoeRadius()});
+			exp->setPos(p->getPos());
+			exp->setDmg(p->getDamage());
+			exp->setAnimation({ 0,5,0,30,false,false });
+			exp->playExplosion();
+			p->setHasExploded(true);
+			explosions.push_back(exp);
+
+			//## Check for collisions (this sucks, but naive method again for now)
+			sf::CircleShape c;
+			c.setRadius(p->getAoeRadius());
+			c.setPosition(p->getPos());
+
+			for (auto e : enemies)
+			{
+				if (coll::circleRectIntersect(c,e->getGlobalBounds()))
+				{
+					//Then they collide
+					std::cout << "EXPLOSION DAMAGE" << std::endl;
+					float dist = utl::dist(p->getPos().x, p->getPos().y, e->getPos().x, e->getPos().y);
+					//(max - actual) / max * baseDamage
+					//float dmg = ((p->getAoeRadius() - dist) / p->getAoeRadius()) * p->getDamage();
+					float dmg = p->getDamage();
+
+					e->modCurrHP(-1 * dmg);
+					std::cout << "Enemy: " << e->getID() << " just took " << dmg << " damage: " << e->getCurrHp() << std::endl;
+				}
+			}
+		}
+	}
+}
+
+void State_Heli::updateExplosions(float dt)
+{
+	for (auto it = explosions.begin(); it != explosions.end();)
+	{
+
+		if ((*it)->getDone())
+		{
+			delete (*it);
+			it = explosions.erase(it);
+		}
+		else
+		{
+			(*it)->update(dt);
+			++it;
 		}
 	}
 }
@@ -135,6 +199,12 @@ State_Heli::State_Heli(TextureRegistry* textureRegistry, sf::RenderWindow* windo
 State_Heli::~State_Heli() {
 	delete map;
 	delete player;
+
+	for (auto e : explosions)
+	{
+		delete e;
+	}
+	explosions.clear();
 }
 
 
@@ -142,6 +212,8 @@ void State_Heli::update(float dt) {
 	player->update(dt, *win);
 	this->updateEnemies(dt);
 	this->updateCollision(dt);
+	this->updateProjectiles(dt);
+	this->updateExplosions(dt);
 	this->updateTest(dt);
 	this->updateCamera(dt);
 }
@@ -154,11 +226,18 @@ void State_Heli::poll(sf::RenderWindow& win, std::optional<sf::Event> event) {
 void State_Heli::draw(sf::RenderWindow& win) {
 	win.setView(win.getDefaultView());
 
-
 	win.setView(view_map);
 	map->draw(win);
 	for (auto e : enemies) {
 		e->draw(win);
 	}
+
+	projectileMgr.draw(win);
 	player->draw(win);
+
+	win.setView(view_map);
+	for (auto e : explosions)
+	{
+		e->draw(win);
+	}
 }

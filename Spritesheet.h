@@ -56,6 +56,7 @@ private:
 
 	//Animation
 	bool isAnimated = false;
+	bool isAnimationDone = false;
 	Animation currAnimation;
 	float animTimer = 0.f;
 
@@ -88,6 +89,7 @@ public:
 	void setAnimation(Animation animation);
 
 	inline bool getAnimated() { return isAnimated; }
+	inline bool getAnimationDone() { return isAnimationDone; }
 	bool contains(sf::Vector2<float> pos);
 
 	sf::Vector2<float> getPosition();

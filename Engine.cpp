@@ -31,6 +31,7 @@ void Engine::initTextures()
 	texReg->addTexture("cursor_brush", "resource/tex/cursor_brush.png");
 	texReg->addTexture("circleIcon", "resource/tex/circleIcon.png");
 	texReg->addTexture("squareIcon", "resource/tex/squareIcon.png");
+	texReg->addTexture("explosion_0", "resource/tex/explosion_0.png");
 }
 
 void Engine::initState()

@@ -119,6 +119,10 @@ void Helicopter::fireWeapon(sf::Vector2<float> targetPos)
 	if (weaponSel == 1) { damage = cannonDmg; }
 	sf::Vector2<float> pSize = rocketSize;
 	if (weaponSel == 1) { pSize = bulletSize; }
+	bool doesExplode = true;
+	if (weaponSel == 1) { doesExplode = false; }
+	float aoeRadius = rocketAoe;
+	if (weaponSel == 1) { aoeRadius = cannonAoe; }
 
 	Projectile* p = new Projectile(projectilePos, theta); //is deleted by projectile manager
 	p->setTexture(texture);
@@ -129,7 +133,9 @@ void Helicopter::fireWeapon(sf::Vector2<float> targetPos)
 	p->setSpeed(pSpeed);
 	p->setTeam(0);
 	p->setDamage(damage);
-	projectileMgr.addProjectile(p);
+	p->setDoesExplode(doesExplode);
+	p->setAoeRadius(aoeRadius);
+	if(projectileMgr){ projectileMgr->addProjectile(p); }
 }
 
 void Helicopter::updateController(float dt, sf::RenderWindow& win)
@@ -171,6 +177,9 @@ void Helicopter::updateController(float dt, sf::RenderWindow& win)
 	//Add drag
 	
 	mom *= drag;
+
+	mom.x = std::clamp(mom.x, -1.f * maxMom, maxMom);
+	mom.y = std::clamp(mom.y, -1.f * maxMom, maxMom);
 
 	//Clip at max momentum
 	/*if (mom.x > maxMom.x) {
@@ -305,7 +314,10 @@ void Helicopter::updateRocketFireControl(float dt, sf::Vector2<float> mapViewMou
 	}
 
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && canRocketFire) {
-		this->fireWeapon(mapViewMousePos);
+		//Make the target be slightly past mouse pos
+		std::pair<float, float> targ = utl::projectPointLn(sprite.getPosition().x, sprite.getPosition().y, mapViewMousePos.x, mapViewMousePos.y, 1.1);
+
+		this->fireWeapon({targ.first, targ.second});
 		isRocketWatingToFire = true;
 		rocketClipCurr -= 1;
 
@@ -335,13 +347,22 @@ void Helicopter::updateCannonFireControl(float dt, sf::Vector2<float> mapViewMou
 	}
 
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && canCannonFire) {
-		this->fireWeapon(mapViewMousePos);
+		//Make the target be slightly past mouse pos
+		std::pair<float, float> targ = utl::projectPointLn(sprite.getPosition().x, sprite.getPosition().y, mapViewMousePos.x, mapViewMousePos.y, 1.1);
+
+		this->fireWeapon({ targ.first, targ.second });
 		isCannonWatingToFire = true;
 	}
 }
 
+void Helicopter::playRocketSound()
+{
+}
+
 Helicopter::Helicopter()
 {
+	this->init();
+
 	sprite.setDrawBounds(true);
 	
 	//Set up debug text
@@ -431,8 +452,6 @@ void Helicopter::update(float dt, sf::RenderWindow &win) {
 	// this->updateBasic(dt, win);
 
 	sprite.update(dt);
-
-	projectileMgr.update(dt);
 }
 
 void Helicopter::poll(sf::RenderWindow& win, std::optional<sf::Event> event) {
@@ -506,12 +525,29 @@ void Helicopter::poll(sf::RenderWindow& win, std::optional<sf::Event> event) {
 		if (keyRel->code == sf::Keyboard::Key::Num2) {
 			weaponSel = 1;
 		}
+
+		if (keyRel->code == sf::Keyboard::Key::Q)
+		{
+			//Strafe Left
+			float strafeX = strafeDelta * std::cosf(sprite.getRotation().asRadians() + utl::degToRad(180.f));
+			float strafeY = strafeDelta * std::sinf(sprite.getRotation().asRadians() + utl::degToRad(180.f));
+
+			mom = {strafeX, strafeY};
+		}
+
+		if (keyRel->code == sf::Keyboard::Key::E)
+		{
+			//Strafe Right
+			float strafeX = strafeDelta * std::cosf(sprite.getRotation().asRadians());
+			float strafeY = strafeDelta * std::sinf(sprite.getRotation().asRadians());
+
+			mom = {strafeX, strafeY};
+		}
 	}
 
 }
 
-void Helicopter::draw(sf::RenderWindow& win) {
-	projectileMgr.draw(win);	
+void Helicopter::draw(sf::RenderWindow& win) {	
 	sprite.draw(win);
 	this->drawDebug(win);
 }

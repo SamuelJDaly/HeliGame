@@ -129,6 +129,7 @@ void Spritesheet::setAnimation(Animation animation)
 		currAnimation = animation;
 		this->setFrame(animation.startFrame);
 		isAnimated = true;
+		isAnimationDone = false;
 	}
 }
 
@@ -241,6 +242,7 @@ void Spritesheet::update(float dt) {
 
 		if (currAnimation.isDone) {
 			isAnimated = false;
+			isAnimationDone = true;
 		}
 	}
 }
