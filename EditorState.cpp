@@ -947,8 +947,8 @@ void EditorState::showGuiTilesetAdd(bool* pOpen)
 }
 
 
-EditorState::EditorState(TextureRegistry* textureRegistry, sf::RenderWindow* window)
-	: Gamestate(textureRegistry, window)
+EditorState::EditorState(TextureRegistry* textureRegistry, AudioManager* audioManager, sf::RenderWindow* window)
+	: Gamestate(textureRegistry, audioManager, window)
 {
 	mapView = win->getDefaultView();
 	this->init();

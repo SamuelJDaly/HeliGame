@@ -49,7 +49,7 @@ private:
 	void updateExplosions(float dt); //Explosion stuff
 public:
 	//## Constructor and Destructor
-	State_Heli(TextureRegistry* textureRegistry, sf::RenderWindow* window);
+	State_Heli(TextureRegistry* textureRegistry, AudioManager* audioManager, sf::RenderWindow* window);
 	~State_Heli();
 
 	//## Primary Functions

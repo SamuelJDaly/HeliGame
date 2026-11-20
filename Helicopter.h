@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 #include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
 #include "Spritesheet.h"
+#include "AudioManager.h"
 #include "Projectile.h"
 #include "Utility.h"
 
@@ -19,6 +19,9 @@ private:
 	sf::Vector2<float> lastOffset = { 0,0 };
 
 	int kills = 0;
+
+	//
+	AudioManager* audioManager = nullptr;
 
 	//## Controller
 	sf::Vector2<float> vel = {0.f,0.f}; // px/s
@@ -107,7 +110,7 @@ private:
 
 public:
 	//## Constructor and Destructor
-	Helicopter();
+	Helicopter(AudioManager* audioManager);
 	~Helicopter();
 
 	//## Primary Functions

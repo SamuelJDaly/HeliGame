@@ -242,7 +242,7 @@ private:
 	void showGuiTilesetAdd(bool* pOpen);
 public:
 	//## Constructor and Destructor
-	EditorState(TextureRegistry* textureRegistry, sf::RenderWindow* window);
+	EditorState(TextureRegistry* textureRegistry, AudioManager* audioManager, sf::RenderWindow* window);
 	~EditorState();
 
 	//## Primary Functions

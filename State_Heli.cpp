@@ -67,7 +67,7 @@ void State_Heli::init() {
 	projectileMgr.setView(view_map);
 
 	//## Player
-	player = new Helicopter();
+	player = new Helicopter(audioManager);
 	player->setTexture(texReg->lookup("heli_green"));
 	//player->setPos({ win->getSize().x / 2.f , win->getSize().y / 2.f });
 	player->setPos(view_map.getCenter());
@@ -190,8 +190,8 @@ void State_Heli::updateExplosions(float dt)
 }
 
 
-State_Heli::State_Heli(TextureRegistry* textureRegistry, sf::RenderWindow* window)
-	: Gamestate(textureRegistry, window)
+State_Heli::State_Heli(TextureRegistry* textureRegistry, AudioManager* audioManager, sf::RenderWindow* window)
+	: Gamestate(textureRegistry,audioManager, window)
 { 
 	this->init();
 }

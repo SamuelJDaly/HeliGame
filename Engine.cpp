@@ -1,43 +1,47 @@
 #include "Engine.h"
 #include "Item.h"
+#include "AudioManager.h"
 
 void Engine::initWindow()
 {
 	win = new sf::RenderWindow;
-	win->create(sf::VideoMode({ 1280, 720 }), "Utility AI Practice");
+	win->create(sf::VideoMode({ 1280, 720 }), "Helicopter Game");
 }
 
 void Engine::initTextures()
 {
-	texReg = new TextureRegistry();
+	texReg.loadFromFile(textureManifestPath);
 
-	texReg->loadFromFile(textureManifestPath);
+	texReg.addTexture("default", "resource/tex/nope.png");
+	texReg.addTexture("tileset_test", "resource/tex/tileset_test.png");
+	texReg.addTexture("tileset_0", "resource/tex/tileset_1.png");
+	texReg.addTexture("tileset_3", "resource/tex/tileset_3.png");
+	texReg.addTexture("tileset_4", "resource/tex/citysheet.png");
+	texReg.addTexture("player", "resource/tex/redcircle.png");
+	texReg.addTexture("star", "resource/tex/star.png");
+	texReg.addTexture("medkit", "resource/tex/medkit.png");
+	texReg.addTexture("heli_green", "resource/tex/heli_green.png");
+	texReg.addTexture("heli_black", "resource/tex/heli_black.png");
+	texReg.addTexture("rocket", "resource/tex/rocket_1.png");
+	texReg.addTexture("rocket2", "resource/tex/rocket_2.png");
+	texReg.addTexture("bullet", "resource/tex/bullet.png");
+	texReg.addTexture("truck_0", "resource/tex/truck_0.png");
+	texReg.addTexture("cursor_sel", "resource/tex/cursor_sel.png");
+	texReg.addTexture("cursor_brush", "resource/tex/cursor_brush.png");
+	texReg.addTexture("circleIcon", "resource/tex/circleIcon.png");
+	texReg.addTexture("squareIcon", "resource/tex/squareIcon.png");
+	texReg.addTexture("explosion_0", "resource/tex/explosion_0.png");
+}
 
-	texReg->addTexture("default", "resource/tex/nope.png");
-	texReg->addTexture("tileset_test", "resource/tex/tileset_test.png");
-	texReg->addTexture("tileset_0", "resource/tex/tileset_1.png");
-	texReg->addTexture("tileset_3", "resource/tex/tileset_3.png");
-	texReg->addTexture("tileset_4", "resource/tex/citysheet.png");
-	texReg->addTexture("player", "resource/tex/redcircle.png");
-	texReg->addTexture("star", "resource/tex/star.png");
-	texReg->addTexture("medkit", "resource/tex/medkit.png");
-	texReg->addTexture("heli_green", "resource/tex/heli_green.png");
-	texReg->addTexture("heli_black", "resource/tex/heli_black.png");
-	texReg->addTexture("rocket", "resource/tex/rocket_1.png");
-	texReg->addTexture("rocket2", "resource/tex/rocket_2.png");
-	texReg->addTexture("bullet", "resource/tex/bullet.png");
-	texReg->addTexture("truck_0", "resource/tex/truck_0.png");
-	texReg->addTexture("cursor_sel", "resource/tex/cursor_sel.png");
-	texReg->addTexture("cursor_brush", "resource/tex/cursor_brush.png");
-	texReg->addTexture("circleIcon", "resource/tex/circleIcon.png");
-	texReg->addTexture("squareIcon", "resource/tex/squareIcon.png");
-	texReg->addTexture("explosion_0", "resource/tex/explosion_0.png");
+void Engine::initAudio()
+{
+	audioManager.registerSound("rocket_fire", "resource/sfx/rocket_0.wav");
 }
 
 void Engine::initState()
 {
 	//currState = new State_Game(texReg, win);
-	currState = new State_Heli(texReg, this->win);
+	currState = new State_Heli(&texReg,&audioManager, this->win);
 	//currState = new State_Menu(textureHandler, this->win);
 	//currState = new EditorState(texReg, this->win);
 }
@@ -47,6 +51,7 @@ Engine::Engine()
 	std::srand(std::time(0));
 	this->initWindow();
 	this->initTextures();
+	this->initAudio();
 	this->initState();
 	if (!ImGui::SFML::Init(*win)) {
 		std::cout << "Failed to initiate ImGui" << std::endl;
@@ -68,7 +73,6 @@ Engine::~Engine()
 {
 	ImGui::SFML::Shutdown();
 	delete currState;
-	delete texReg;
 	delete win;
 }
 
@@ -102,6 +106,9 @@ void Engine::poll()
 	}
 }
 
+
+
+
 void Engine::update()
 {
 	//## Update delta time
@@ -124,6 +131,7 @@ void Engine::update()
 	//Update Current State
 	ImGui::SFML::Update(*win, sf::seconds(deltaTime));
 	currState->update(deltaTime);
+	audioManager.update();
 
 	//State Transition Logic
 	if (currState->getFinished()) {
@@ -140,14 +148,14 @@ void Engine::update()
 			//De allocate last state
 			delete currState;
 			//Allocate new state
-			currState = new State_Game(texReg, this->win);
+			currState = new State_Heli(&texReg,&audioManager, this->win);
 
 			break;
 		case En_Gamestate::EDITOR:
 			//De allocate last state
 			delete currState;
 			//Allocate new state
-			//currState = new State_Editor(textureHandler, this->win);
+			currState = new EditorState(&texReg, &audioManager,  this->win);
 
 			break;
 		case En_Gamestate::END:
@@ -189,7 +197,7 @@ void Engine::draw()
 
 void Engine::writeTextures()
 {
-	texReg->writeToFile(textureManifestPath);
+	texReg.writeToFile(textureManifestPath);
 }
 
 

@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="EditorState.cpp" />
     <ClCompile Include="Enemy.cpp" />
@@ -155,6 +156,7 @@
     <ClCompile Include="TilesetBrowser.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AudioManager.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="EditorState.h" />
     <ClInclude Include="Enemy.h" />

@@ -2,7 +2,6 @@
 
 void Helicopter::init()
 {
-	
 }
 
 void Helicopter::drawDebug(sf::RenderWindow& win)
@@ -123,6 +122,7 @@ void Helicopter::fireWeapon(sf::Vector2<float> targetPos)
 	if (weaponSel == 1) { doesExplode = false; }
 	float aoeRadius = rocketAoe;
 	if (weaponSel == 1) { aoeRadius = cannonAoe; }
+	if (weaponSel == 0) { this->playRocketSound(); }
 
 	Projectile* p = new Projectile(projectilePos, theta); //is deleted by projectile manager
 	p->setTexture(texture);
@@ -357,11 +357,13 @@ void Helicopter::updateCannonFireControl(float dt, sf::Vector2<float> mapViewMou
 
 void Helicopter::playRocketSound()
 {
+	audioManager->playSound("rocket_fire");
 }
 
-Helicopter::Helicopter()
+Helicopter::Helicopter(AudioManager* audioManager)
 {
 	this->init();
+	this->audioManager = audioManager;
 
 	sprite.setDrawBounds(true);
 	
