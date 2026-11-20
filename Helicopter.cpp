@@ -315,7 +315,7 @@ void Helicopter::updateRocketFireControl(float dt, sf::Vector2<float> mapViewMou
 
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && canRocketFire) {
 		//Make the target be slightly past mouse pos
-		std::pair<float, float> targ = utl::projectPointLn(sprite.getPosition().x, sprite.getPosition().y, mapViewMousePos.x, mapViewMousePos.y, 1.1);
+		std::pair<float, float> targ = utl::projectPointLn(sprite.getPosition().x, sprite.getPosition().y, mapViewMousePos.x, mapViewMousePos.y, 1.1f);
 
 		this->fireWeapon({targ.first, targ.second});
 		isRocketWatingToFire = true;
@@ -348,7 +348,7 @@ void Helicopter::updateCannonFireControl(float dt, sf::Vector2<float> mapViewMou
 
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && canCannonFire) {
 		//Make the target be slightly past mouse pos
-		std::pair<float, float> targ = utl::projectPointLn(sprite.getPosition().x, sprite.getPosition().y, mapViewMousePos.x, mapViewMousePos.y, 1.1);
+		std::pair<float, float> targ = utl::projectPointLn(sprite.getPosition().x, sprite.getPosition().y, mapViewMousePos.x, mapViewMousePos.y, 1.1f);
 
 		this->fireWeapon({ targ.first, targ.second });
 		isCannonWatingToFire = true;

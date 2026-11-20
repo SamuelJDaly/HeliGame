@@ -39,14 +39,15 @@ void Engine::initAudio()
 void Engine::initState()
 {
 	//currState = new State_Game(texReg, win);
-	currState = new State_Heli(&texReg,&audioManager, this->win);
+	//currState = new State_Heli(&texReg,&audioManager, this->win);
 	//currState = new State_Menu(textureHandler, this->win);
-	//currState = new EditorState(texReg, this->win);
+	currState = new EditorState(&texReg, &audioManager ,this->win);
 }
 
 Engine::Engine()
 {
-	std::srand(std::time(0));
+	unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
+	std::srand(seed);
 	this->initWindow();
 	this->initTextures();
 	this->initAudio();

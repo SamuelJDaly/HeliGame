@@ -39,7 +39,7 @@ int ActionPaint::execute()
 
 	//Loop Through every provided tile coordinate and modify its data accordingly
 	sf::Vector3<int> dimensions = target->getDimensions();
-	for (int i = 0; i < positions.size(); i++)
+	for (int i = 0; i < (int)positions.size(); i++)
 	{
 		sf::Vector3<int> idx = positions.at(i);
 		//Check for valid index
@@ -224,7 +224,7 @@ void EditorState::init()
 
 bool EditorState::isBelowMap(sf::Vector2<float> pos)
 {
-	float mapBottom = map->getDimensions().y * map->getTileSize();
+	float mapBottom = (float)(map->getDimensions().y * map->getTileSize());
 	if (pos.y > mapBottom)
 	{
 		return true;
@@ -234,7 +234,7 @@ bool EditorState::isBelowMap(sf::Vector2<float> pos)
 
 bool EditorState::isRightOfMap(sf::Vector2<float> pos)
 {
-	float mapRight = map->getDimensions().x * map->getTileSize();
+	float mapRight = (float)(map->getDimensions().x * map->getTileSize());
 	if (pos.x > mapRight)
 	{
 		return true;
@@ -307,7 +307,7 @@ void EditorState::drawBrush(sf::RenderWindow& win)
 		return;
 	}
 
-	for (auto i = 0; i < coordinates.size(); i++)
+	for (auto i = 0; i < (int)coordinates.size(); i++)
 	{
 		sf::Vector2<int> coord = { coordinates.at(i).x, coordinates.at(i).y };
 		if (map->containsCoord(coord))
@@ -330,9 +330,9 @@ std::vector<sf::Vector3<int>> EditorState::getBrushPositions(sf::Vector2<int> po
 	//Find the center of the brush
 	sf::Vector2<int> offset = {pos.x - (int)(brushShape.front().size()/2), pos.y - (int)(brushShape.size() / 2)};
 
-	for (auto i = 0; i < brushShape.size(); i++)
+	for (auto i = 0; i < (int)brushShape.size(); i++)
 	{
-		for (auto j = 0; j < brushShape.at(i).size(); j++)
+		for (auto j = 0; j < (int)brushShape.at(i).size(); j++)
 		{
 			if (brushShape.at(i).at(j) && map->containsCoord({ offset.x + j, offset.y + i }))
 			{
@@ -408,7 +408,7 @@ int EditorState::createMap(int width, int height, int layers, int tilesize)
 
 int EditorState::saveMap()
 {
-	auto selection = pfd::save_file("Select a file", "", {}, false).result();
+	auto selection = pfd::save_file("Select a file", "", {}, pfd::opt::force_overwrite).result();
 	if (!selection.empty())
 	{
 		if (!map->writeToFile(selection))
@@ -429,7 +429,7 @@ int EditorState::saveMap()
 int EditorState::openMap()
 {
 
-	auto selection = pfd::open_file("Select a file", "", {},false).result();
+	auto selection = pfd::open_file("Select a file", "", {},pfd::opt::none).result();
 	if (!selection.empty())
 	{
 		tmap::Tilemap* newMap = new tmap::Tilemap(texReg);
@@ -523,7 +523,7 @@ void EditorState::ShowMenuBar_Options()
 	if (ImGui::BeginMenu("Colors"))
 	{
 		float sz = ImGui::GetTextLineHeight();
-		for (int i = 0; i < gridColorOptions.size(); i++)
+		for (int i = 0; i < (int)gridColorOptions.size(); i++)
 		{
 			const char* name = gridColorNames.at(i).c_str();
 			sf::Color col = gridColorOptions.at(i);
@@ -626,6 +626,7 @@ void EditorState::showGuiNewMap(bool* pOpen)
 		//Set map filename NOT IMPLEMENTED
 
 		*pOpen = false;
+		//strncpy_s(newMapName,0,"",512);
 		strncpy(newMapName, "", 512);
 		newMapWidth = 10;
 		newMapHeight = 10;
@@ -638,6 +639,7 @@ void EditorState::showGuiNewMap(bool* pOpen)
 	if (ImGui::Button("Cancel##nmd"))
 	{
 		*pOpen = false;
+		//strncpy_s(newMapName, 0, "", 512);
 		strncpy(newMapName,"",512);
 		newMapWidth = 10;
 		newMapHeight = 10;
@@ -674,7 +676,7 @@ void EditorState::showGuiTileEditor(bool* pOpen)
 	const char* combo_preview_value = tilesets.at(tilsetSelIdx).first.c_str();
 	if (ImGui::BeginCombo("tilsetSel", combo_preview_value, flags))
 	{
-		for (int i = 0; i < tilesets.size(); i++)
+		for (int i = 0; i < (int)tilesets.size(); i++)
 		{
 			const bool is_selected = (tilsetSelIdx == i);
 			if (ImGui::Selectable(tilesets.at(i).first.c_str(), is_selected))
@@ -820,7 +822,7 @@ void EditorState::showGuiTileEditor(bool* pOpen)
 	if (ImGui::ImageButton("###tey", circleIcon, ImVec2(size, size)))
 	{
 		isPaintToolSelected = true;
-		this->setBrushCircle(1.7);
+		this->setBrushCircle(1.7f);
 	}
 
 	ImGui::SameLine();
@@ -853,12 +855,13 @@ void EditorState::showGuiTilesetAdd(bool* pOpen)
 	ImGui::InputText("###aa",tilesetTexturePath,IM_ARRAYSIZE(tilesetTexturePath));
 	if (ImGui::Button("Browse"))
 	{
-		auto selection = pfd::open_file("Select a file", "", {".png"}, false).result();
+		auto selection = pfd::open_file("Select a file", "", {".png"}, pfd::opt::none).result();
 		
 		if (!selection.empty())
 		{
 
 			std::strncpy(tilesetTexturePath, selection.front().c_str(), 512);
+			//strncpy_s(tilesetTexturePath, selection.front().size(), selection.front().c_str(), 512);
 
 			//Check if texture is already used under a different name
 			std::string existingName = texReg->getKey(tilesetTexturePath);
@@ -866,6 +869,7 @@ void EditorState::showGuiTilesetAdd(bool* pOpen)
 			{
 				//Then it exists, autofill the name
 				std::strncpy(tilesetTextureName, existingName.c_str(), 512);
+				//strncpy_s(tilesetTextureName, existingName.size(), existingName.c_str(), 512);
 			}
 		}
 	}
@@ -893,6 +897,9 @@ void EditorState::showGuiTilesetAdd(bool* pOpen)
 		{
 			std::strncpy(tilesetTexturePath, "", 512);
 			std::strncpy(tilesetTextureName, "", 512);
+			//strncpy_s(tilesetTexturePath, 0, "",512);
+			//strncpy_s(tilesetTextureName, 0, "",512);
+
 			tsAddTexSize = 32;
 			*pOpen = false;
 			return;
@@ -928,6 +935,8 @@ void EditorState::showGuiTilesetAdd(bool* pOpen)
 		
 		std::strncpy(tilesetTexturePath, "", 512);
 		std::strncpy(tilesetTextureName, "", 512);
+		//strncpy_s(tilesetTexturePath, 0, "", 512);
+		//strncpy_s(tilesetTextureName, 0, "", 512);
 		tsAddTexSize = 32;
 		*pOpen = false;
 
@@ -939,6 +948,8 @@ void EditorState::showGuiTilesetAdd(bool* pOpen)
 	{
 		std::strncpy(tilesetTexturePath, "", 512);
 		std::strncpy(tilesetTextureName, "", 512);
+		//strncpy_s(tilesetTexturePath, 0, "", 512);
+		//strncpy_s(tilesetTextureName, 0, "", 512);
 		tsAddTexSize = 32;
 		*pOpen = false;
 	}

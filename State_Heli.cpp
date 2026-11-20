@@ -93,8 +93,8 @@ void State_Heli::spawnRandomEnemies(int amt)
 {
 	for (int i = 0; i < amt; i++) {
 		sf::Vector2<float> pos;
-		pos.x = utl::randRange(20,(int)map->getSize().x - 20);
-		pos.y = utl::randRange(20, (int)map->getSize().y - 20);
+		pos.x = (float)utl::randRange(20,(int)map->getSize().x - 20);
+		pos.y = (float)utl::randRange(20, (int)map->getSize().y - 20);
 
 		Enemy* e = new Enemy(enemyCount);
 		e->setTexture(texReg->lookup("truck_0"));
@@ -161,7 +161,7 @@ void State_Heli::updateProjectiles(float dt)
 					float dist = utl::dist(p->getPos().x, p->getPos().y, e->getPos().x, e->getPos().y);
 					//(max - actual) / max * baseDamage
 					//float dmg = ((p->getAoeRadius() - dist) / p->getAoeRadius()) * p->getDamage();
-					float dmg = p->getDamage();
+					int dmg = p->getDamage();
 
 					e->modCurrHP(-1 * dmg);
 					std::cout << "Enemy: " << e->getID() << " just took " << dmg << " damage: " << e->getCurrHp() << std::endl;

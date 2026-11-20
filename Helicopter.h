@@ -72,7 +72,7 @@ private:
 	sf::Font font;
 	sf::Color debugTextFgCol = sf::Color::Green;
 	sf::Color debugTextBgCol = sf::Color::Black;
-	float debugTextSize = 15.f;
+	unsigned debugTextSize = 15;
 	sf::Text momText = sf::Text(font);
 	sf::Text velText = sf::Text(font);
 	sf::Text angleText = sf::Text(font);

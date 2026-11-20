@@ -12,7 +12,7 @@ bool tmap::TileLayer::validIdx(int x, int y)
         return false;
     }
 
-    if (x < 0 || x >= tiles.back().size() || y < 0 || y >= tiles.size())
+    if (x < 0 || x >= (int)tiles.back().size() || y < 0 || y >= (int)tiles.size())
     {
         return false;
     }
@@ -68,10 +68,10 @@ tmap::TileLayer::TileLayer(TileLayer& src)
     this->offset = src.offset;
     this->tileSize = src.tileSize;
     
-    for (int i = 0; i < src.tiles.size(); i++)
+    for (unsigned i = 0; i < src.tiles.size(); i++)
     {
         tiles.push_back(std::vector<tmap::Tile*>());
-        for (int j = 0; j < src.tiles.at(i).size(); j++)
+        for (unsigned j = 0; j < src.tiles.at(i).size(); j++)
         {
             tiles.at(i).push_back(new tmap::Tile(*src.tiles.at(i).at(j)));
         }
@@ -81,9 +81,9 @@ tmap::TileLayer::TileLayer(TileLayer& src)
 tmap::TileLayer::~TileLayer()
 {
     //Deallocate tiles
-    for (auto i = 0; i < tiles.size(); i++)
+    for (unsigned i = 0; i < tiles.size(); i++)
     {
-        for (auto j = 0; j < tiles.at(i).size(); j++)
+        for (unsigned j = 0; j < tiles.at(i).size(); j++)
         {
             delete tiles.at(i).at(j);
         }
@@ -205,8 +205,8 @@ void tmap::TileLayer::refreshTiles(TextureRegistry& texReg, std::vector<std::pai
 
 sf::Vector2<float> tmap::Tilemap::getSize()
 {
-    float x = dimensions.x * tileSize;
-    float y = dimensions.y * tileSize;
+    float x = (float)(dimensions.x * tileSize);
+    float y =(float)(dimensions.y * tileSize);
 
     return { x,y };
 }
@@ -249,9 +249,9 @@ void tmap::TileLayer::move(sf::Vector2<float> amt)
 {
     offset += amt;
 
-    for (auto i = 0; i < tiles.size(); i++)
+    for (unsigned i = 0; i < tiles.size(); i++)
     {
-        for (auto j = 0; j < tiles.at(i).size(); j++)
+        for (unsigned j = 0; j < tiles.at(i).size(); j++)
         {
             tiles.at(i).at(j)->sprite.move(amt);
         }
@@ -265,7 +265,7 @@ void tmap::TileLayer::resize(int x, int y)
     //Expand
     for (int i = 0; i < y; i++)
     {
-        if (i < tiles.size())
+        if (i < (int)tiles.size())
         {
             //Existing row
             newTiles.push_back(tiles.at(i));
@@ -296,9 +296,9 @@ void tmap::TileLayer::resize(int x, int y)
 
 void tmap::TileLayer::draw(sf::RenderWindow& win)
 {
-    for (auto i = 0; i < tiles.size(); i++)
+    for (unsigned i = 0; i < tiles.size(); i++)
     {
-        for (auto j = 0; j < tiles.at(i).size(); j++)
+        for (unsigned j = 0; j < tiles.at(i).size(); j++)
         {
             if (tiles.at(i).at(j)->sheet >= 0 && tiles.at(i).at(j)->type >= 0)
             {
@@ -319,7 +319,7 @@ void tmap::TileLayer::draw(sf::RenderWindow& win)
 void tmap::Tilemap::clearLayers()
 {
     //De-allocate layer memory
-    for (auto i = 0; i < layers.size(); i++)
+    for (unsigned i = 0; i < layers.size(); i++)
     {
         delete layers.at(i);
     }
@@ -463,7 +463,7 @@ tmap::Tilemap::Tilemap(Tilemap& src)
     this->tileSize = src.tileSize;
     
     //Copy layer data
-    for (int i = 0; i < src.layers.size(); i++)
+    for (unsigned i = 0; i < src.layers.size(); i++)
     {
         layers.push_back(new tmap::TileLayer(*src.layers.at(i)));
     }
@@ -733,7 +733,7 @@ void tmap::Tilemap::draw(sf::RenderWindow& win)
     //Draw Grid
     if (doDrawGrid)
     {
-        for (auto i = 0; i < grid.size(); i += 2)
+        for (unsigned i = 0; i < grid.size(); i += 2)
         {
             sf::Vertex line[2] = { grid.at(i),grid.at(i + 1) };
             win.draw(line, 2, sf::PrimitiveType::Lines);
@@ -744,7 +744,7 @@ void tmap::Tilemap::draw(sf::RenderWindow& win)
 void tmap::Tilemap::draw(sf::RenderWindow& win, int topLayer)
 {
     //Validate layer count
-    if (topLayer >= layers.size())
+    if (topLayer >= (int)layers.size())
     {
         topLayer = (int)layers.size()-1;
     }
@@ -758,7 +758,7 @@ void tmap::Tilemap::draw(sf::RenderWindow& win, int topLayer)
     //Draw Grid
     if (doDrawGrid)
     {
-        for (auto i = 0; i < grid.size(); i += 2)
+        for (unsigned i = 0; i < grid.size(); i += 2)
         {
             sf::Vertex line[2] = { grid.at(i),grid.at(i + 1) };
             win.draw(line, 2, sf::PrimitiveType::Lines);

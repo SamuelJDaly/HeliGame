@@ -51,8 +51,8 @@ void Enemy::updateBasic(float dt)
 
 		if (wanderTimer >= wanderIntervalCurr) {
 			//Select new target
-			float x = utl::randRange((int)sprite.getPosition().x - wanderRange, (int)sprite.getPosition().x + wanderRange);
-			float y = utl::randRange((int)sprite.getPosition().y - wanderRange, (int)sprite.getPosition().y + wanderRange);
+			float x = (float)utl::randRange((int)sprite.getPosition().x - wanderRange, (int)sprite.getPosition().x + wanderRange);
+			float y = (float)utl::randRange((int)sprite.getPosition().y - wanderRange, (int)sprite.getPosition().y + wanderRange);
 
 			if (x < 0.f) { x = 0.f; }
 			if (y < 0.f) { y = 0.f; }

@@ -32,11 +32,11 @@ namespace utl {
 
 	//2D Distance
 	inline float dist(float x1, float y1, float x2, float y2) {
-		return std::sqrtf(std::powf(x2 - x1, 2) + std::powf(y2 - y1, 2));
+		return std::sqrtf(std::powf(x2 - x1, 2.f) + std::powf(y2 - y1, 2.f));
 	}
 
 	inline float gridDist(int x1, int y1, int x2, int y2) {
-		return std::sqrtf(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
+		return std::sqrtf(std::powf((float)(x2 - x1), 2.f) + std::powf((float)(y2 - y1), 2.f));
 	}
 
 	//Float comparison

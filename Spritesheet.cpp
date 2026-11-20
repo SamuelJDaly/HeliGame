@@ -10,11 +10,11 @@ sf::Rect<int> Spritesheet::calculateRect()
 
 bool Spritesheet::checkAnimation(Animation anm)
 {
-	if (anm.startFrame < 0 || anm.startFrame >= numFrames) {
+	if (anm.startFrame < 0 || (int)anm.startFrame >= numFrames) {
 		return false;
 	}
 
-	if (anm.endFrame < 0 || anm.endFrame >= numFrames) {
+	if (anm.endFrame < 0 || (int)anm.endFrame >= numFrames) {
 		return false;
 	}
 
