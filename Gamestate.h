@@ -10,11 +10,8 @@
 #include "TextureRegistry.h"
 #include "AudioManager.h"
 #include "Spritesheet.h"
-
 #include "Tilemap.h"
-#include "Player.h"
-#include "Item.h"
-#include "Map.h"
+
 
 /*
 Project: Helicopter Game, Gamestate System

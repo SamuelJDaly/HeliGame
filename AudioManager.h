@@ -26,8 +26,6 @@ public:
 
 	//## Primary Functions
 	void registerSound(std::string name, std::string filename);
-	
-	
 
 	void playSound(std::string name, float volume = 100.f);
 	void update();
