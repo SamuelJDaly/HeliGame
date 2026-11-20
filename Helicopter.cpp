@@ -357,7 +357,7 @@ void Helicopter::updateCannonFireControl(float dt, sf::Vector2<float> mapViewMou
 
 void Helicopter::playRocketSound()
 {
-	audioManager->playSound("rocket_fire");
+	audioManager->playSound("rocket_fire", 50.f);
 }
 
 Helicopter::Helicopter(AudioManager* audioManager)

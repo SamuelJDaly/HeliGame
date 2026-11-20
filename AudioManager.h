@@ -17,7 +17,7 @@ private:
 	bool soundLoaded = false;
 
 	//## Util
-
+	sf::SoundBuffer* lookupSound(std::string name);
 
 public:
 	//## Constructor and Destructor
@@ -26,10 +26,10 @@ public:
 
 	//## Primary Functions
 	void registerSound(std::string name, std::string filename);
-	sf::SoundBuffer* lookupSound(std::string name);
+	
 	
 
-	void playSound(std::string name);
+	void playSound(std::string name, float volume = 100.f);
 	void update();
 };
 

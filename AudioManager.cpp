@@ -1,5 +1,24 @@
 #include "AudioManager.h"
 
+sf::SoundBuffer* AudioManager::lookupSound(std::string name)
+{
+	auto it = soundRegistry.find(name);
+
+	if (it == soundRegistry.end())
+	{
+		std::cout << "Sound not found: [" << name << "]" << std::endl;
+		return nullptr;
+	}
+	else
+	{
+		return &soundRegistry.at(name);
+	}
+
+
+	return nullptr;
+}
+
+
 AudioManager::AudioManager()
 {
 
@@ -25,25 +44,8 @@ void AudioManager::registerSound(std::string name, std::string filename)
 	soundRegistry.insert({name, buffer});
 }
 
-sf::SoundBuffer* AudioManager::lookupSound(std::string name)
-{
-	auto it = soundRegistry.find(name);
 
-	if (it == soundRegistry.end())
-	{
-		std::cout << "Sound not found: [" << name << "]" << std::endl;
-		return nullptr;
-	}
-	else
-	{
-		return &soundRegistry.at(name);
-	}
-
-
-	return nullptr;
-}
-
-void AudioManager::playSound(std::string name)
+void AudioManager::playSound(std::string name, float volume)
 {
 	if (numSounds >= 255)
 	{
@@ -60,6 +62,7 @@ void AudioManager::playSound(std::string name)
 	}
 
 	sounds.push(sf::Sound(*buffer));
+	sounds.back().setVolume(volume);
 	sounds.back().play();
 	numSounds++;
 }
